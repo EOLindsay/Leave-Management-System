@@ -77,30 +77,37 @@ $conn->close();
         body{
             font-family: 'Poppins', sans-serif;
         }
+        .container{
+            width: 400px;
+        }
     </style>
 </head>
 <body>
-    <div class="container m-5">
+    <div class="container mt-5">
         <!-- login card -->
-         <div class="card rounded-4 shadow-lg border-0 mb-5">
+        <div class="card bg-light rounded-4 shadow-lg border-0 mb-5">
             <div class="card-header text-center">
                 <h2>LOGIN</h2>
-                <?php if ($error) echo "<p style='color:red;'>$error</p>"; ?>
-                <div class="card-body">
-                    <form method="post" action="">
-                        <div class="mb-3">
-                            <label class="form-label">Username:</label>
-                            <input type="text" class="form-control" name="username" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Password:</label>
-                            <input type="password" class="form-control" name="password" required>
-                        </div>
-                        <input type="submit" value="Login">
+            </div>
+            <?php if ($error) echo "<p style='color:red;'>$error</p>"; ?>
+            <div class="card-body">
+                <form method="post" action="">
+                    <div class="mb-3">
+                        <label class="form-label">Username:</label>
+                        <input type="text" class="form-control" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password:</label>
+                        <input type="password" class="form-control" name="password" required>
+                    </div>
+                    <div class="d-grid">
+                        <button class="btn btn-dark rounded-4 m-4" type="submit">
+                            Login
+                        </button>
+                    </div>
                     </form>
                 </div>
-            </div>
-         </div>
+        </div>
     </div>
     <h2>Login</h2>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
