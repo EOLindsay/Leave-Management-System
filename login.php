@@ -36,13 +36,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // Redirect based on role
                 switch ($role) {
                     case 'admin':
-                        header("Location: admin_dashboard.php");
+                        header("Location: admin.php");
                         break;
                     case 'manager':
-                        header("Location: manager_dashboard.php");
+                        header("Location: manager.php");
                         break;
                     case 'employee':
-                        header("Location: employee_dashboard.php");
+                        header("Location: employee.php");
                         break;
                     default:
                         $error = "Invalid user role.";
