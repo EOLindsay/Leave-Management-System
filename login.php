@@ -68,6 +68,7 @@ $conn->close();
 <html>
 <head>
     <title>Login - Leave Management System</title>
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -76,6 +77,13 @@ $conn->close();
     <style>
         body{
             font-family: 'Poppins', sans-serif;
+            background: url('assets/img/ebac.jpg') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            backdrop-filter: blur(5px);
         }
         .container{
             width: 400px;
@@ -88,6 +96,7 @@ $conn->close();
         <div class="card bg-light rounded-4 shadow-lg border-0 mb-5">
             <div class="card-header text-center">
                 <h2>LOGIN</h2>
+                <!-- <img src="assets/img/logot.png" alt="Leave Management Logo" style="width: 180px; display: block; margin: 10px auto;"> -->
             </div>
             <?php if ($error) echo "<p style='color:red;'>$error</p>"; ?>
             <div class="card-body">
