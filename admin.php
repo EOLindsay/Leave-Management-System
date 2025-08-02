@@ -52,25 +52,35 @@ if ($_SESSION["role"] !== "admin") {
     </style>
 </head>
 <body>
+    <header>
+        <nav>
+            <ul>
+                <a href=""></a>
+                <a href=""></a>
+                <a href=""></a>
+                <a href=""></a>
+            </ul>
+        </nav>
+    </header>
 
-<h2>Welcome, <?php echo htmlspecialchars($_SESSION["username"]); ?>!</h2>
-<p><strong>Role:</strong> <?php echo $_SESSION["role"]; ?></p>
+    <h2>Welcome, <?php echo htmlspecialchars($_SESSION["username"]); ?>!</h2>
+    <p><strong>Role:</strong> <?php echo $_SESSION["role"]; ?></p>
+z\\\\
+    <h3>Admin Controls</h3>
+    <ul>
+        <li><a href="manage_users.php">Manage Users</a></li>
+        <li><a href="manage_employees.php">Manage Employees</a></li>
+        <li><a href="manage_departments.php">Manage Departments</a></li>
+        <li><a href="manage_leave_types.php">Manage Leave Types</a></li>
+        <li><a href="manage_leave_policies.php">Manage Leave Policies</a></li>
+        <li><a href="view_all_requests.php">View All Leave Requests</a></li>
+        <li><a href="system_reports.php">View System Reports</a></li>
+    </ul>
 
-<h3>Admin Controls</h3>
-<ul>
-    <li><a href="manage_users.php">Manage Users</a></li>
-    <li><a href="manage_employees.php">Manage Employees</a></li>
-    <li><a href="manage_departments.php">Manage Departments</a></li>
-    <li><a href="manage_leave_types.php">Manage Leave Types</a></li>
-    <li><a href="manage_leave_policies.php">Manage Leave Policies</a></li>
-    <li><a href="view_all_requests.php">View All Leave Requests</a></li>
-    <li><a href="system_reports.php">View System Reports</a></li>
-</ul>
-
-<!-- Logout -->
-<form method="post" action="logout.php" class="logout-btn">
-    <button type="submit">Logout</button>
-</form>
+    <!-- Logout -->
+    <form method="post" action="logout.php" class="logout-btn">
+        <button type="submit">Logout</button>
+    </form>
 
 </body>
 </html>
