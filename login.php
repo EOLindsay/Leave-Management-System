@@ -75,15 +75,43 @@ $conn->close();
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        body{
+        body {
+            margin:0;
+            padding: 0px;
+            box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
-            background: url('assets/img/ebac.jpg') no-repeat center center fixed;
-            background-size: cover;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             backdrop-filter: blur(5px);
+            overflow: hidden;
+        }
+        .bg{
+            animation:slide 5s ease-in-out infinite alternate;
+            background-image: linear-gradient(-60deg, rgba(3, 36, 3, 1) 50%, rgba(255, 255, 255, 1) 50%);
+            bottom:0;
+            left:-50%;
+            opacity:.5;
+            position:fixed;
+            right:-50%;
+            top:0;
+            z-index:-1;
+        }
+        .bg2{
+            animation-direction:alternate-reverse;
+            animation-duration:6s;
+        }
+        .bg3{
+            animation-duration:7s;
+        }
+        @keyframes slide {
+            0% {
+                transform:translateX(-25%);
+            }
+            100% {
+                transform:translateX(25%);
+            }
         }
         .container{
             width: 400px;
@@ -91,33 +119,38 @@ $conn->close();
     </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <!-- login card -->
-        <div class="card bg-light rounded-4 shadow-lg border-0 mb-5">
-            <div class="card-header text-center">
-                <h2>LOGIN</h2>
-                <!-- <img src="assets/img/logot.png" alt="Leave Management Logo" style="width: 180px; display: block; margin: 10px auto;"> -->
-            </div>
-            <?php if ($error) echo "<p style='color:red;'>$error</p>"; ?>
-            <div class="card-body">
-                <form method="post" action="">
-                    <div class="mb-3">
-                        <label class="form-label">Username:</label>
-                        <input type="text" class="form-control" name="username" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Password:</label>
-                        <input type="password" class="form-control" name="password" required>
-                    </div>
-                    <div class="d-grid">
-                        <button class="btn btn-dark rounded-4 m-4" type="submit">
-                            Login
-                        </button>
-                    </div>
-                </form>
+    <div class="bg"></div>
+    <div class="bg bg2"></div>
+    <div class="bg bg3"></div>
+        <div class="container mt-5">
+            <!-- login card -->
+            <div class="card bg-light rounded-4 shadow-lg border-0 mb-5">
+                <div class="card-header text-center">
+                    <h2>LOGIN</h2>
+                    <!-- <img src="assets/img/logot.png" alt="Leave Management Logo" style="width: 180px; display: block; margin: 10px auto;"> -->
+                </div>
+                <?php if ($error) echo "<p style='color:red;'>$error</p>"; ?>
+                <div class="card-body">
+                    <form method="post" action="">
+                        <div class="mb-3">
+                            <label class="form-label">Username:</label>
+                            <input type="text" class="form-control" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password:</label>
+                            <input type="password" class="form-control" name="password" required>
+                        </div>
+                        <div class="d-grid">
+                            <button class="btn btn-dark rounded-4 m-4" type="submit">
+                                Login
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
+
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
 </body>
 </html>
