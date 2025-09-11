@@ -3,7 +3,7 @@ session_start();
 
 // Database credentials
 $host = "localhost";
-$db = "lms_database";
+$db = "leave_management";
 $user = "root";
 $pass = "";
 
