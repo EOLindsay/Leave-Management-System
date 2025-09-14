@@ -259,7 +259,7 @@ $conn->close();
                                 <div class="col-12 col-md-7">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <form method="POST" class="row">
+                                            <form method="POST" action="" class="row g-3">
                                                 <div class="col-8">
                                                     <label for="department_id" class="form-label">DepartmentID</label>
                                                     <input type="number" class="form-control" id="department_id" name="department_id" required>

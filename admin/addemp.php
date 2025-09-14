@@ -1,9 +1,55 @@
 <?php
 session_start();
-if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
+
+
+if (!isset($_SESSION["employee_id"])) {
     header("Location: login.php");
     exit;
 }
+
+
+$host = "localhost";
+$db   = "leave_management";
+$user = "root";
+$pass = "";
+
+$conn = new mysqli($host, $user, $pass, $db);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Handle form submission
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_employee"])) {
+    $first_name   = trim($_POST["first_name"]);
+    $last_name    = trim($_POST["last_name"]);
+    $email        = trim($_POST["email"]);
+    $username     = trim($_POST["username"]);
+    $password     = password_hash($_POST["password"], PASSWORD_DEFAULT); // hash password
+    $department_id= $_POST["department_id"];
+    $gender       = $_POST["gender"];
+    $mobile       = $_POST["mobile"];
+    $role         = $_POST["role"];
+
+    if (!empty($first_name) && !empty($last_name) && !empty($email) && !empty($username) && !empty($_POST["password"])) {
+        $stmt = $conn->prepare("INSERT INTO employee (first_name, last_name, email, username, password, department_id, gender, mobile, role) 
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssssssss", $first_name, $last_name, $email, $username, $password, $department_id, $gender, $mobile, $role);
+
+        if ($stmt->execute()) {
+            $_SESSION["success"] = "Employee added successfully ✅";
+            header("Location: addemployee.php");
+            exit;
+        } else {
+            $error = "Error: " . $stmt->error;
+        }
+
+        $stmt->close();
+    } else {
+        $error = "All required fields must be filled ❌";
+    }
+}
+
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -185,7 +231,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
             </aside>
             <div class="main">
                 <nav class="navbar navbar-expand px-4 py-3">
-                    <h6>Admin Dashboard</h6>
+                    <h6>Employees</h6>
                     <div class="navbar-collapse collapse">
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
@@ -215,103 +261,75 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Welcome, <?php echo htmlspecialchars($_SESSION["first_name"]);?>!
+                                Add Employee
                             </h2>
                             <div class="row">
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
-                                        <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
-                                        <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
-                                        <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
                                 <div class="col-12">
-                                    <h3 class="fw-bold fs-4 my-3">leave Requests</h3>
-                                    <table class="table table-striped-columns">
-                                        <thead>
-                                            <tr class="highlight">
-                                            <th scope="col">#</th>
-                                            <th scope="col">First</th>
-                                            <th scope="col">Last</th>
-                                            <th scope="col">Handle</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                            <th scope="row">1</th>
-                                            <td>Mark</td>
-                                            <td>Otto</td>
-                                            <td>@mdo</td>
-                                            </tr>
-                                            <tr>
-                                            <th scope="row">2</th>
-                                            <td>Jacob</td>
-                                            <td>Thornton</td>
-                                            <td>@fat</td>
-                                            </tr>
-                                            <tr>
-                                            <th scope="row">3</th>
-                                            <td>John</td>
-                                            <td>Doe</td>
-                                            <td>@social</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                    <div class="card shadow">
+                                        <div class="card-body py-4">
+                                            <form method="POST" action="" class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="first_name" class="form-label">First Name</label>
+                                                    <input type="text" class="form-control" id="first_name" name="first_name" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="last_name" class="form-label">Last Name</label>
+                                                    <input type="text" class="form-control" id="last_name" name="last_name" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="email" class="form-label">Email</label>
+                                                    <input type="email" class="form-control" id="email" name="email" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="username" class="form-label">Username</label>
+                                                    <input type="text" class="form-control" id="username" name="username" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="password" class="form-label">Password</label>
+                                                    <input type="password" class="form-control" id="password" name="password" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="mobile" class="form-label">Mobile</label>
+                                                    <input type="tel" class="form-control" id="mobile" name="mobile" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="gender" class="form-label">Gender</label>
+                                                    <select id="gender" name="gender" class="form-select">
+                                                        <option value="">-- Select Gender --</option>
+                                                        <option value="Male">
+                                                            Male
+                                                        </option>
+                                                        <option value="Female">
+                                                            Female
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Department</label>
+                                                    <select class="form-select" name="department_id" required>
+                                                        <option value="">-- Select Department --</option>
+                                                        <?php while ($row = $departments->fetch_assoc()): ?>
+                                                            <option value="<?php echo $row['department_id']; ?>">
+                                                                <?php echo htmlspecialchars($row['department_name']); ?>
+                                                            </option>
+                                                        <?php endwhile; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Role</label>
+                                                    <select class="form-select" name="role" required>
+                                                        <option value="">-- Select Role --</option>
+                                                        <option value="employee">Employee</option>
+                                                        <option value="manager">Manager</option>
+                                                        <option value="administrator">Administrator</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-12">
+                                                    <button type="submit" name="add_employee" class="btn btn-dark">Add Employee</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
