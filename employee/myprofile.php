@@ -84,24 +84,24 @@ $conn->close();
                         </a>
                         <ul id="leave" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="apply.php" class="sidebar-link">
                                     Apply For Leave
                                 </a>
                             </li>
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="balance.php" class="sidebar-link">
                                     Leave Balance
                                 </a>
                             </li>
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="status.php" class="sidebar-link">
                                     Leave Status
                                 </a>
                             </li>
                         </ul>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link">
+                        <a href="history.php" class="sidebar-link">
                             <i class="bx  bx-history"></i> 
                             <span>Leave History</span>
                          </a>
@@ -113,7 +113,7 @@ $conn->close();
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link">
+                        <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
                             <span>Settings</span>
                         </a>
@@ -140,7 +140,7 @@ $conn->close();
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
                                     </a>
-                                    <a href="#" class="dropdown-item">
+                                    <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
                                     </a>

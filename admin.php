@@ -39,18 +39,18 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                     </li>
                     <li class="sidebar-item">
                         <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
-                        data-bs-target="#auth" aria-expanded="false" aria-controls="auth">
+                        data-bs-target="#dept" aria-expanded="false" aria-controls="dept">
                             <i class="bx bx-building"></i>
                             <span>Departments</span>
                         </a>
-                        <ul id="auth" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                        <ul id="dept" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="admin/adddept.php" class="sidebar-link">
                                     Add Department
                                 </a>
                             </li>
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="admin/mandept.php" class="sidebar-link">
                                     Manage Departments
                                 </a>
                             </li>
@@ -70,10 +70,10 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                                 </a>
                                 <ul id="type" class="sidebar-dropdown list-unstyled collapse">
                                     <li class="sidebar-item">
-                                        <a href="#" class="sidebar-link">Add Leave Type</a>
+                                        <a href="admin/addtype.php" class="sidebar-link">Add Leave Type</a>
                                     </li>
                                     <li class="sidebar-item">
-                                        <a href="#" class="sidebar-link">Manage Leave Types</a>
+                                        <a href="admin/mantype.php" class="sidebar-link">Manage Leave Types</a>
                                     </li>
                                 </ul>
                             </li>
@@ -84,10 +84,10 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                                 </a>
                                 <ul id="policy" class="sidebar-dropdown list-unstyled collapse">
                                     <li class="sidebar-item">
-                                        <a href="#" class="sidebar-link">Add Leave Policy</a>
+                                        <a href="admin/addpolicy.php" class="sidebar-link">Add Leave Policy</a>
                                     </li>
                                     <li class="sidebar-item">
-                                        <a href="#" class="sidebar-link">Manage Leave Policies</a>
+                                        <a href="admin/manpolicy.php" class="sidebar-link">Manage Leave Policies</a>
                                     </li>
                                 </ul>
                             </li>
@@ -98,7 +98,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                                 </a>
                                 <ul id="balance" class="sidebar-dropdown list-unstyled collapse">
                                     <li class="sidebar-item">
-                                        <a href="#" class="sidebar-link">Edit Leave Balance</a>
+                                        <a href="admin/editbalances.php" class="sidebar-link">Edit Leave Balance</a>
                                     </li>
                                 </ul>
                             </li>
@@ -112,17 +112,17 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                         </a>
                         <ul id="emp" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="admin/addemp.php" class="sidebar-link">
                                     Add Employee
                                 </a>
                             </li>
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="admin/grantp.php" class="sidebar-link">
                                     Employee Permissions
                                 </a>
                             </li>
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="admin/manemp.php" class="sidebar-link">
                                     Manage Employees
                                 </a>
                             </li>
@@ -136,29 +136,29 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                         </a>
                         <ul id="manage" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="admin/all.php" class="sidebar-link">
                                     All Leaves
                                 </a>
                             </li>
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="admin/pending.php" class="sidebar-link">
                                     Pending Leaves
                                 </a>
                             </li>
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="admin/approved.php" class="sidebar-link">
                                     Approved Leaves
                                 </a>
                             </li>
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="admin/rejected.php" class="sidebar-link">
                                     Rejected Leaves
                                 </a>
                             </li>
                         </ul>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link">
+                        <a href="admin/report.php" class="sidebar-link">
                             <i class="bx bx-file-detail"></i>
                             <span>Leave Report</span>
                         </a>
@@ -170,7 +170,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link">
+                        <a href="admin/settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
                             <span>Settings</span>
                         </a>
@@ -197,7 +197,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
                                     </a>
-                                    <a href="#" class="dropdown-item">
+                                    <a href="admin/settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
                                     </a>

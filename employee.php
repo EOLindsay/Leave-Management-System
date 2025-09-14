@@ -51,24 +51,24 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "employee") {
                         </a>
                         <ul id="leave" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="employee/apply.php" class="sidebar-link">
                                     Apply For Leave
                                 </a>
                             </li>
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="employee/balance.php" class="sidebar-link">
                                     Leave Balance
                                 </a>
                             </li>
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="employee/status.php" class="sidebar-link">
                                     Leave Status
                                 </a>
                             </li>
                         </ul>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link">
+                        <a href="employee/history.php" class="sidebar-link">
                             <i class="bx  bx-history"></i> 
                             <span>Leave History</span>
                          </a>
@@ -80,7 +80,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "employee") {
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link">
+                        <a href="employee/settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
                             <span>Settings</span>
                         </a>
@@ -107,7 +107,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "employee") {
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
                                     </a>
-                                    <a href="#" class="dropdown-item">
+                                    <a href="employee/settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
                                     </a>

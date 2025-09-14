@@ -78,13 +78,13 @@ $conn->close();
                     </li>
                     <li class="sidebar-item">
                         <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
-                        data-bs-target="#auth" aria-expanded="false" aria-controls="auth">
+                        data-bs-target="#emp" aria-expanded="false" aria-controls="emp">
                             <i class="bx bx-people-diversity"></i>
                             <span>Employees</span>
                         </a>
-                        <ul id="auth" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                        <ul id="emp" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="grantp.php" class="sidebar-link">
                                     Employee Permissions
                                 </a>
                             </li>
@@ -92,35 +92,35 @@ $conn->close();
                     </li>
                     <li class="sidebar-item">
                         <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
-                        data-bs-target="#auth" aria-expanded="false" aria-controls="auth">
+                        data-bs-target="#manage" aria-expanded="false" aria-controls="manage">
                             <i class="bx bx-server"></i>
                             <span>Leave Management</span>
                         </a>
-                        <ul id="auth" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                        <ul id="manage" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="all.php" class="sidebar-link">
                                     All Leaves
                                 </a>
                             </li>
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="pending.php" class="sidebar-link">
                                     Pending Leaves
                                 </a>
                             </li>
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="approved.php" class="sidebar-link">
                                     Approved Leaves
                                 </a>
                             </li>
                             <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
+                                <a href="rejected.php" class="sidebar-link">
                                     Rejected Leaves
                                 </a>
                             </li>
                         </ul>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link">
+                        <a href="report.php" class="sidebar-link">
                             <i class="bx bx-file-detail"></i>
                             <span>Leave Report</span>
                         </a>
@@ -132,7 +132,7 @@ $conn->close();
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link">
+                        <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
                             <span>Settings</span>
                         </a>
