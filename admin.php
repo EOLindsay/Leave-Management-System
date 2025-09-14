@@ -107,7 +107,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                     <li class="sidebar-item">
                         <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
                         data-bs-target="#emp" aria-expanded="false" aria-controls="emp">
-                            <i class="bx bx-user"></i>
+                            <i class="bx bx-people-diversity"></i>
                             <span>Employees</span>
                         </a>
                         <ul id="emp" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
@@ -118,7 +118,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                             </li>
                             <li class="sidebar-item">
                                 <a href="#" class="sidebar-link">
-                                    Grant Employee Permissions
+                                    Employee Permissions
                                 </a>
                             </li>
                             <li class="sidebar-item">
@@ -219,7 +219,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                             </h2>
                             <div class="row">
                                 <div class="col-12 col-md-4">
-                                    <div class="card shadow">
+                                    <div class="card effect shadow">
                                         <div class="card-body py-4">
                                             <h5 class="mb-2 fw-bold">
                                                 Member Progress
@@ -239,7 +239,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4">
-                                    <div class="card shadow">
+                                    <div class="card effect shadow">
                                         <div class="card-body py-4">
                                             <h5 class="mb-2 fw-bold">
                                                 Member Progress
@@ -259,7 +259,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4">
-                                    <div class="card shadow">
+                                    <div class="card effect shadow">
                                         <div class="card-body py-4">
                                             <h5 class="mb-2 fw-bold">
                                                 Member Progress
@@ -281,7 +281,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                             </div>
                             <div class="row">
                                 <div class="col-12 col-md-4">
-                                    <div class="card shadow">
+                                    <div class="card effect shadow">
                                         <div class="card-body py-4">
                                             <h5 class="mb-2 fw-bold">
                                                 Member Progress
@@ -301,7 +301,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4">
-                                    <div class="card shadow">
+                                    <div class="card effect shadow">
                                         <div class="card-body py-4">
                                             <h5 class="mb-2 fw-bold">
                                                 Member Progress
@@ -321,7 +321,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4">
-                                    <div class="card shadow">
+                                    <div class="card effect shadow">
                                         <div class="card-body py-4">
                                             <h5 class="mb-2 fw-bold">
                                                 Member Progress

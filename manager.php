@@ -24,7 +24,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "manager") {
             <aside id="sidebar">
                 <div class="d-flex justify-content-between p-4">
                     <div class="sidebar-logo">
-                    <a href="manager.php"><img src="assets/img/logolight.png" style="width: 166px; height: 50.8px;" alt=" SeamLess Leave"></a>                    </div>
+                    <a href=".manager.php"><img src="assets/img/logolight.png" style="width: 166px; height: 50.8px;" alt=" SeamLess Leave"></a>                    </div>
                     <button class="toggle-btn border-0" type="button">
                         <i id="icon" class="bx bxs-chevrons-right"></i>
                     </button>
@@ -37,53 +37,21 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "manager") {
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
-                        data-bs-target="#auth" aria-expanded="false" aria-controls="auth">
-                            <i class="bx bx-building"></i>
-                            <span>Departments</span>
-                        </a>
-                        <ul id="auth" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
-                            <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
-                                    Add Department
-                                </a>
-                            </li>
-                            <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
-                                    Manage Departments
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li class="sidebar-item">
-                        <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
-                        data-bs-target="#auth" aria-expanded="false" aria-controls="auth">
-                            <i class="bx bx-pencil-square"></i>
-                            <span>Leave Type</span>
-                        </a>
-                        <ul id="auth" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
-                            <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
-                                    Add Leave Type
-                                </a>
-                            </li>
-                            <li class="sidebar-item">
-                                <a href="#" class="sidebar-link">
-                                    Manage Leave Types
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li class="sidebar-item">
-                        <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
-                        data-bs-target="#auth" aria-expanded="false" aria-controls="auth">
+                        <a href="manager/myprofile.php" class="sidebar-link">
                             <i class="bx bx-user"></i>
+                            <span>My Profile</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
+                        data-bs-target="#auth" aria-expanded="false" aria-controls="auth">
+                            <i class="bx bx-people-diversity"></i>
                             <span>Employees</span>
                         </a>
                         <ul id="auth" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
                             <li class="sidebar-item">
                                 <a href="#" class="sidebar-link">
-                                    Grant Employee Permissions
+                                    Employee Permissions
                                 </a>
                             </li>
                         </ul>
@@ -179,7 +147,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "manager") {
                             </h2>
                             <div class="row">
                                 <div class="col-12 col-md-4">
-                                    <div class="card shadow">
+                                    <div class="card effect shadow">
                                         <div class="card-body py-4">
                                             <h6 class="mb-2 fw-bold">
                                                 Member Progress
@@ -199,7 +167,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "manager") {
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4">
-                                    <div class="card shadow">
+                                    <div class="card effect shadow">
                                         <div class="card-body py-4">
                                             <h6 class="mb-2 fw-bold">
                                                 Member Progress
@@ -219,7 +187,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "manager") {
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4">
-                                    <div class="card shadow">
+                                    <div class="card effect shadow">
                                         <div class="card-body py-4">
                                             <h6 class="mb-2 fw-bold">
                                                 Member Progress
@@ -241,7 +209,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "manager") {
                             </div>
                             <div class="row">
                                 <div class="col-12 col-md-4">
-                                    <div class="card shadow">
+                                    <div class="card effect shadow">
                                         <div class="card-body py-4">
                                             <h6 class="mb-2 fw-bold">
                                                 Member Progress
@@ -261,7 +229,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "manager") {
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4">
-                                    <div class="card shadow">
+                                    <div class="card effect shadow">
                                         <div class="card-body py-4">
                                             <h6 class="mb-2 fw-bold">
                                                 Member Progress
@@ -281,7 +249,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "manager") {
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4">
-                                    <div class="card shadow">
+                                    <div class="card effect shadow">
                                         <div class="card-body py-4">
                                             <h6 class="mb-2 fw-bold">
                                                 Member Progress

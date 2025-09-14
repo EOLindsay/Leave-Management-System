@@ -32,13 +32,13 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "employee") {
                 </div>
                 <ul class="sidebar-nav">
                     <li class="sidebar-item">
-                        <a href="employee" class="sidebar-link">
+                        <a href="employee.php" class="sidebar-link">
                             <i class="bx bx-dashboard"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a href="employee" class="sidebar-link">
+                        <a href="employee/myprofile.php" class="sidebar-link">
                             <i class="bx bx-user"></i>
                             <span>My Profile</span>
                         </a>
@@ -129,7 +129,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "employee") {
                             </h2>
                             <div class="row">
                                 <div class="col-12 col-md-4">
-                                    <div class="card shadow">
+                                    <div class="card effect shadow">
                                         <div class="card-body py-4">
                                             <h5 class="mb-2 fw-bold">
                                                 Member Progress
@@ -149,7 +149,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "employee") {
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4">
-                                    <div class="card shadow">
+                                    <div class="card effect shadow">
                                         <div class="card-body py-4">
                                             <h5 class="mb-2 fw-bold">
                                                 Member Progress
@@ -169,7 +169,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "employee") {
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4">
-                                    <div class="card shadow">
+                                    <div class="card effect shadow">
                                         <div class="card-body py-4">
                                             <h5 class="mb-2 fw-bold">
                                                 Member Progress

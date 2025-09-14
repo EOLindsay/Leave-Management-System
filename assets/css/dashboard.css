@@ -106,7 +106,7 @@ a.sidebar-link:hover{
     opacity: 1;
 }
 #sidebar:not(.expand) .sidebar-item .sidebar-dropdown .sidebar-dropdown{
-    left: 200px;
+    left: 130px;
 }
 #sidebar.expand .sidebar-link[data-bs-toggle="collapse"]::after{
     border: solid;
@@ -170,7 +170,7 @@ a.sidebar-link:hover{
     font-size: 0.7161rem;
     margin-bottom: 0.25rem;
 }
-.card:hover{
+.effect:hover{
     background-color: #3c4d40;
     color: #FFF;
     transform: translateY(-10.5px);
