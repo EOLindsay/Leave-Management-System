@@ -273,7 +273,7 @@ $conn->close();
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Edit leave Policies
+                                Edit Leave Policies
                             </h2>
                             <div class="row">
                                 <div class="col-12">

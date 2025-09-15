@@ -1,15 +1,49 @@
 <?php
 session_start();
-if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
+
+if (!isset($_SESSION["employee_id"])) {
     header("Location: login.php");
     exit;
 }
+
+$host = "localhost";
+$db   = "leave_management";
+$user = "root";
+$pass = "";
+
+$conn = new mysqli($host, $user, $pass, $db);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+$success = "";
+$error   = "";
+
+if (isset($_GET["delete"])) {
+    $type_id = intval($_GET["delete"]);
+
+    $stmt = $conn->prepare("DELETE FROM leave_type WHERE type_id = ?");
+    $stmt->bind_param("i", $type_id);
+
+    if ($stmt->execute()) {
+        $success = "Leave type deleted successfully!";
+    } else {
+        $error = "Error deleting leave type: " . $stmt->error;
+    }
+    $stmt->close();
+}
+
+$sql = "SELECT type_id, type_name, description, requires_approval, default_accrualrate_perperiod, max_carryover_days FROM leave_type ORDER BY type_id ASC";
+
+$types = $conn->query($sql);
+
+$conn->close();
 ?>
 
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Admin Dashboard</title>
+        <title>Leaves</title>
         <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" 
         integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
@@ -24,7 +58,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
             <aside id="sidebar">
                 <div class="d-flex justify-content-between p-4">
                     <div class="sidebar-logo">
-                         <a href="#"><img src="../assets/img/logolight.png" style="width: 166px; height: 50.8px;" alt=" SeamLess Leave"></a> 
+                         <a href="../admin.php"><img src="../assets/img/logolight.png" style="width: 166px; height: 50.8px;" alt=" SeamLess Leave"></a> 
                     </div>
                     <button class="toggle-btn border-0" type="button">
                         <i id="icon" class="bx bxs-chevrons-right"></i>
@@ -38,7 +72,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
+                        <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" 
                         data-bs-target="#dept" aria-expanded="false" aria-controls="dept">
                             <i class="bx bx-building"></i>
                             <span>Departments</span>
@@ -185,7 +219,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
             </aside>
             <div class="main">
                 <nav class="navbar navbar-expand px-4 py-3">
-                    <h6>Admin Dashboard</h6>
+                    <h6>Types</h6>
                     <div class="navbar-collapse collapse">
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
@@ -215,103 +249,51 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Welcome, <?php echo htmlspecialchars($_SESSION["first_name"]);?>!
+                                Manage Leave Types
                             </h2>
                             <div class="row">
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
-                                        <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
-                                        <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
-                                        <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
                                 <div class="col-12">
-                                    <h3 class="fw-bold fs-4 my-3">leave Requests</h3>
-                                    <table class="table table-striped-columns">
-                                        <thead>
-                                            <tr class="highlight">
-                                            <th scope="col">#</th>
-                                            <th scope="col">First</th>
-                                            <th scope="col">Last</th>
-                                            <th scope="col">Handle</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                            <th scope="row">1</th>
-                                            <td>Mark</td>
-                                            <td>Otto</td>
-                                            <td>@mdo</td>
-                                            </tr>
-                                            <tr>
-                                            <th scope="row">2</th>
-                                            <td>Jacob</td>
-                                            <td>Thornton</td>
-                                            <td>@fat</td>
-                                            </tr>
-                                            <tr>
-                                            <th scope="row">3</th>
-                                            <td>John</td>
-                                            <td>Doe</td>
-                                            <td>@social</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                    <div class="card shadow">
+                                        <div class="card-body py-4">
+                                            <a href="addtype.php" class="btn btn-dark mb-3">Add New Leave Type</a>
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr class="highlight">
+                                                    <th scope="col">ID</th>
+                                                    <th scope="col">Name</th>
+                                                    <th scope="col">Description</th>
+                                                    <th scope="col">Requires Approval</th>
+                                                    <th scope="col">Accrual Rate</th>
+                                                    <th scope="col">Max Carryover Days</th>
+                                                    <th scope="col">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php if ($types->num_rows > 0): ?>
+                                                        <?php while ($row = $types->fetch_assoc()): ?>
+                                                            <tr>
+                                                                <td><?php echo $row['type_id']; ?></td>
+                                                                <td><?php echo htmlspecialchars($row['type_name']); ?></td>
+                                                                <td><?php echo htmlspecialchars($row['description']); ?></td>
+                                                                <td><?php echo $row['requires_approval'] ? "Yes" : "No"; ?></td>
+                                                                <td><?php echo htmlspecialchars($row['default_accrualrate_perperiod']); ?></td>
+                                                                <td><?php echo htmlspecialchars($row['max_carryover_days']); ?></td>
+                                                                <td>
+                                                                    <a href="edittype.php?id=<?php echo $row['type_id']; ?>" class="btn btn-lg"><i class='bx  bx-edit'  style="color: green;"></i> </a>
+                                                                    <a href="manpolicy.php?delete=<?php echo $row['type_id']; ?>" class="btn btn-lg" onclick="return confirm('Are you sure you want to delete this employee record?');"><i class='bx  bx-trash-x' style="color: red;" ></i> </a>
+                                                                </td>
+                                                            </tr>
+                                                        <?php endwhile; ?>
+                                                    <?php else: ?>
+                                                        <tr>
+                                                            <td colspan="10" class="text-center">No leave policies found</td>
+                                                        </tr>
+                                                    <?php endif; ?>
+                                                </tbody>
+                                            </table>
+                                            <a href="addpolicy.php" class="btn btn-dark">Add New Policy</a>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -320,6 +302,6 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
             </div>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-        <script src="assets/js/dashboard.js"></script>
+        <script src="../assets/js/dashboard.js"></script>
     </body>
 </html>
