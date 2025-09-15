@@ -1,12 +1,10 @@
 <?php
 session_start();
 
-
 if (!isset($_SESSION["employee_id"])) {
     header("Location: login.php");
     exit;
 }
-
 
 $host = "localhost";
 $db   = "leave_management";
@@ -18,41 +16,73 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_employee"])) {
+
+if (!isset($_GET["id"])) {
+    die("No employee ID provided.");
+}
+$employee_id = intval($_GET["id"]);
+
+
+$stmt = $conn->prepare("SELECT employee_id, first_name, last_name, email, username, mobile, role, gender, department_id, hire_date FROM employee WHERE employee_id = ?");
+$stmt->bind_param("i", $employee_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$employee = $result->fetch_assoc();
+$stmt->close();
+
+if (!$employee) {
+    die("Employee not found.");
+}
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_employee"])) {
     $first_name   = trim($_POST["first_name"]);
     $last_name    = trim($_POST["last_name"]);
     $email        = trim($_POST["email"]);
     $username     = trim($_POST["username"]);
-    $password     = password_hash($_POST["password"], PASSWORD_DEFAULT); 
-    $department_id= $_POST["department_id"];
-    $gender       = $_POST["gender"];
-    $mobile       = $_POST["mobile"];
+    $mobile       = trim($_POST["mobile"]);
     $role         = $_POST["role"];
-    $hire_date         = $_POST["hire_date"];
+    $gender       = $_POST["gender"];
+    $department_id= $_POST["department_id"];
+    $hire_date    = $_POST["hire_date"];
 
-    if (!empty($first_name) && !empty($last_name) && !empty($email) && !empty($username) && !empty($_POST["password"])) {
-        $stmt = $conn->prepare("INSERT INTO employee (first_name, last_name, email, username, password, department_id, gender, mobile, role, hire_date) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssssssssss", $first_name, $last_name, $email, $username, $password, $department_id, $gender, $mobile, $role, $hire_date);
+    $password_sql = "";
+    $params = [$first_name, $last_name, $email, $username, $mobile, $role, $gender, $department_id, $hire_date];
+    $types = "sssssssis"; 
 
-        if ($stmt->execute()) {
-            $_SESSION["success"] = "Employee added successfully";
-            header("Location: addemp.php");
-            exit;
-        } else {
-            $error = "Error: " . $stmt->error;
-        }
-
-        $stmt->close();
-    } else {
-        $error = "All required fields must be filled";
+    if (!empty($_POST["password"])) {
+        $hashed_password = password_hash($_POST["password"], PASSWORD_DEFAULT);
+        $password_sql = ", password=?";
+        $params[] = $hashed_password;
+        $types .= "s";
     }
+
+    $params[] = $employee_id;
+    $types .= "i";
+
+    $sql = "UPDATE employee 
+            SET first_name=?, last_name=?, email=?, username=?, mobile=?, role=?, gender=?, department_id=?, hire_date=? 
+            $password_sql 
+            WHERE employee_id=?";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param($types, ...$params);
+
+    if ($stmt->execute()) {
+        $_SESSION["success"] = "Employee updated successfully";
+        header("Location: manemp.php");
+        exit;
+    } else {
+        $error = "Error: " . $stmt->error;
+    }
+
+    $stmt->close();
 }
 
 $departments = $conn->query("SELECT department_id, department_name FROM department ORDER BY department_name ASC");
 
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html>
@@ -72,7 +102,7 @@ $conn->close();
             <aside id="sidebar">
                 <div class="d-flex justify-content-between p-4">
                     <div class="sidebar-logo">
-                         <a href="#"><img src="../assets/img/logolight.png" style="width: 166px; height: 50.8px;" alt=" SeamLess Leave"></a> 
+                         <a href="../admin.php"><img src="../assets/img/logolight.png" style="width: 166px; height: 50.8px;" alt=" SeamLess Leave"></a> 
                     </div>
                     <button class="toggle-btn border-0" type="button">
                         <i id="icon" class="bx bxs-chevrons-right"></i>
@@ -86,7 +116,7 @@ $conn->close();
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
+                        <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" 
                         data-bs-target="#dept" aria-expanded="false" aria-controls="dept">
                             <i class="bx bx-building"></i>
                             <span>Departments</span>
@@ -263,81 +293,78 @@ $conn->close();
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Add Employee
+                                Edit Employee Record
                             </h2>
                             <div class="row">
                                 <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
+                                            <?php if (!empty($success)): ?>
+                                                <div class="alert alert-success"><?php echo $success; ?></div>
+                                            <?php endif; ?>
                                             <?php if (!empty($error)): ?>
                                                 <div class="alert alert-danger"><?php echo $error; ?></div>
                                             <?php endif; ?>
-                                            <?php if (isset($_SESSION["success"])): ?>
-                                                <div class="alert alert-success"><?php echo $_SESSION["success"]; unset($_SESSION["success"]); ?></div>
-                                            <?php endif; ?>
-                                            <form method="POST" action="" class="row g-3">
+                                            <form method="POST" class="row g-3">
                                                 <div class="col-md-6">
-                                                    <label for="first_name" class="form-label">First Name</label>
-                                                    <input type="text" class="form-control" id="first_name" name="first_name" required>
+                                                    <label class="form-label">First Name</label>
+                                                    <input type="text" name="first_name" value="<?php echo htmlspecialchars($employee['first_name']); ?>" class="form-control" required>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="last_name" class="form-label">Last Name</label>
-                                                    <input type="text" class="form-control" id="last_name" name="last_name" required>
+                                                    <label class="form-label">Last Name</label>
+                                                    <input type="text" name="last_name" value="<?php echo htmlspecialchars($employee['last_name']); ?>" class="form-control" required>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="email" class="form-label">Email</label>
-                                                    <input type="email" class="form-control" id="email" name="email" required>
+                                                    <label class="form-label">Email</label>
+                                                    <input type="email" name="email" value="<?php echo htmlspecialchars($employee['email']); ?>" class="form-control" required>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="username" class="form-label">Username</label>
-                                                    <input type="text" class="form-control" id="username" name="username" required>
+                                                    <label class="form-label">Username</label>
+                                                    <input type="text" name="username" value="<?php echo htmlspecialchars($employee['username']); ?>" class="form-control" required>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="password" class="form-label">Password</label>
-                                                    <input type="password" class="form-control" id="password" name="password" required>
+                                                    <input type="password" class="form-control" name="password">
+                                                    <small class="text-muted">Leave blank to keep current password</small>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="mobile" class="form-label">Mobile</label>
-                                                    <input type="tel" class="form-control" id="mobile" name="mobile" required>
+                                                    <label class="form-label">Mobile</label>
+                                                    <input type="text" name="mobile" value="<?php echo htmlspecialchars($employee['mobile']); ?>" class="form-control">
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="gender" class="form-label">Gender</label>
-                                                    <select id="gender" name="gender" class="form-select">
-                                                        <option value="">-- Select Gender --</option>
-                                                        <option value="Male">
-                                                            Male
-                                                        </option>
-                                                        <option value="Female">
-                                                            Female
-                                                        </option>
+                                                    <label class="form-label">Role</label>
+                                                    <select name="role" class="form-select" required>
+                                                        <option value="Employee" <?php if ($employee['role']=="Employee") echo "selected"; ?>>Employee</option>
+                                                        <option value="Manager" <?php if ($employee['role']=="Manager") echo "selected"; ?>>Manager</option>
+                                                        <option value="Admin" <?php if ($employee['role']=="Admin") echo "selected"; ?>>Admin</option>
                                                     </select>
                                                 </div>
-                                                <div class="col-6">
-                                                    <label for="hire_date" class="form-label">Hire Date</label>
-                                                    <input type="date" class="form-control" id="hire_date" name="hire_date" required>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Gender</label>
+                                                    <select name="gender" class="form-select">
+                                                        <option value="Male" <?php if ($employee['gender']=="Male") echo "selected"; ?>>Male</option>
+                                                        <option value="Female" <?php if ($employee['gender']=="Female") echo "selected"; ?>>Female</option>
+                                                        <option value="Other" <?php if ($employee['gender']=="Other") echo "selected"; ?>>Other</option>
+                                                    </select>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label class="form-label">Department</label>
-                                                    <select class="form-select" name="department_id" required>
-                                                        <option value="">-- Select Department --</option>
-                                                        <?php while ($row = $departments->fetch_assoc()): ?>
-                                                            <option value="<?php echo $row['department_id']; ?>">
-                                                                <?php echo htmlspecialchars($row['department_name']); ?>
+                                                    <select name="department_id" class="form-select" required>
+                                                        <?php while ($dept = $departments->fetch_assoc()): ?>
+                                                            <option value="<?php echo $dept['department_id']; ?>" 
+                                                                <?php if ($dept['department_id'] == $employee['department_id']) echo "selected"; ?>>
+                                                                <?php echo htmlspecialchars($dept['department_name']); ?>
                                                             </option>
                                                         <?php endwhile; ?>
                                                     </select>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label class="form-label">Role</label>
-                                                    <select class="form-select" name="role" required>
-                                                        <option value="">-- Select Role --</option>
-                                                        <option value="employee">Employee</option>
-                                                        <option value="manager">Manager</option>
-                                                        <option value="administrator">Administrator</option>
-                                                    </select>
+                                                    <label class="form-label">Hire Date</label>
+                                                    <input type="date" name="hire_date" value="<?php echo htmlspecialchars($employee['hire_date']); ?>" class="form-control">
                                                 </div>
                                                 <div class="col-12">
-                                                    <button type="submit" name="add_employee" class="btn btn-dark">Add Employee</button>
+                                                    <button type="submit" name="update_employee" class="btn btn-dark">Update Employee</button>
+                                                    <a href="manemp.php" class="btn btn-secondary">Back</a>
                                                 </div>
                                             </form>
                                         </div>

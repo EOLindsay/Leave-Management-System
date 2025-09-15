@@ -280,7 +280,7 @@ $conn->close();
                                                                 </td>
                                                                 <td>
                                                                     <a href="editdept.php?id=<?php echo $row['department_id']; ?>" class="btn btn-lg"><i class='bx  bx-edit'  style="color: green;"></i> </a>
-                                                                    <a href="mandept.php?delete=<?php echo $row['department_id']; ?>" class="btn btn-slg" onclick="return confirm('Are you sure you want to delete this department?');"><i class='bx  bx-trash-x' style="color: red;" ></i> </a>
+                                                                    <a href="mandept.php?delete=<?php echo $row['department_id']; ?>" class="btn btn-lg" onclick="return confirm('Are you sure you want to delete this department?');"><i class='bx  bx-trash-x' style="color: red;" ></i> </a>
                                                                 </td>
                                                             </tr>
                                                         <?php endwhile; ?>
@@ -291,6 +291,7 @@ $conn->close();
                                                     <?php endif; ?>
                                                 </tbody>
                                             </table>
+                                            <a href="adddept.php" class="btn btn-dark">Add New Department</a>
                                         </div>
                                     </div>
                                 </div>

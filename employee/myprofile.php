@@ -27,9 +27,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update"])) {
     $update->bind_param("ssi", $email, $mobile, $employee_id);
 
     if ($update->execute()) {
-        $success = "Profile updated successfully ✅";
+        $success = "Profile updated successfully";
     } else {
-        $error = "Error updating profile ❌: " . $update->error;
+        $error = "Error updating profile: " . $update->error;
     }
 
     $update->close();
@@ -180,6 +180,12 @@ $conn->close();
                                 <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
+                                            <?php if (!empty($success)): ?>
+                                                <div class="alert alert-success"><?php echo $success; ?></div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($error)): ?>
+                                                <div class="alert alert-danger"><?php echo $error; ?></div>
+                                            <?php endif; ?>
                                            <form method="POST" class="row g-3">
                                                 <div class="col-md-6">
                                                     <label for="first_name" class="form-label">First Name</label>

@@ -270,6 +270,12 @@ $conn->close();
                                 <div class="col-12 col-md-7">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
+                                            <?php if (!empty($success)): ?>
+                                                <div class="alert alert-success"><?php echo $success; ?></div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($error)): ?>
+                                                <div class="alert alert-danger"><?php echo $error; ?></div>
+                                            <?php endif; ?>
                                             <form method="POST" class="row g-3">
                                                <div class="col-md-3">
                                                     <label for="type_id" class="form-label">Leave Type ID</label>
@@ -301,6 +307,7 @@ $conn->close();
                                                 </div>
                                                 <div class="col-12">
                                                     <button type="submit" name="add_type" class="btn btn-dark">Add Type</button>
+                                                    <a href="../admin.php" class="btn btn-secondary">Back</a>
                                                 </div>
                                             </form>
                                         </div>

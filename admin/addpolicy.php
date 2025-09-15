@@ -277,6 +277,12 @@ $conn->close();
                                 <div class="col-12 col-md-7">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
+                                            <?php if (!empty($error)): ?>
+                                                <div class="alert alert-danger"><?php echo $error; ?></div>
+                                            <?php endif; ?>
+                                            <?php if (isset($_SESSION["success"])): ?>
+                                                <div class="alert alert-success"><?php echo $_SESSION["success"]; unset($_SESSION["success"]); ?></div>
+                                            <?php endif; ?>
                                             <form method="POST" class="row g-3">
                                                 <div class="col-md-4">
                                                     <label for="policy_id" class="form-label">Policy ID</label>
@@ -323,6 +329,7 @@ $conn->close();
                                                 </div>
                                                 <div class="col-12">
                                                     <button type="submit" name="add_policy" class="btn btn-dark">Add Policy</button>
+                                                    <a href="../admin.php" class="btn btn-secondary">Back</a>
                                                 </div>
                                             </form>
                                         </div>
