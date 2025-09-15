@@ -19,31 +19,50 @@ if ($conn->connect_error) {
 $success = "";
 $error = "";
 
-if (isset($_GET["delete"])) {
-    $policy_id = intval($_GET["delete"]);
+if (!isset($_GET["id"])) {
+    die("Policy ID missing!");
+}
+$policy_id = intval($_GET["id"]);
 
-    $stmt = $conn->prepare("DELETE FROM leave_policy WHERE policy_id = ?");
-    $stmt->bind_param("i", $policy_id);
+$stmt = $conn->prepare("SELECT policy_id, type_id, policy_name, description, accrual_rate, maxdays_peryear, noticeperiod_days, gender_specific 
+                        FROM leave_policy WHERE policy_id = ?");
+$stmt->bind_param("i", $policy_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$policy = $result->fetch_assoc();
+$stmt->close();
+
+if (!$policy) {
+    die("Policy not found!");
+}
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_policy"])) {
+    $type_id        = $_POST["type_id"];
+    $policy_name    = trim($_POST["policy_name"]);
+    $description    = trim($_POST["description"]);
+    $accrual_rate   = $_POST["accrual_rate"];
+    $maxdays        = $_POST["maxdays_peryear"];
+    $noticeperiod   = $_POST["noticeperiod_days"];
+    $gender_specific= $_POST["gender_specific"];
+
+    $stmt = $conn->prepare("UPDATE leave_policy SET type_id=?, policy_name=?, description=?, accrual_rate=?, maxdays_peryear=?, noticeperiod_days=?, gender_specific=? WHERE policy_id=?");
+    $stmt->bind_param("issiiisi", $type_id, $policy_name, $description, $accrual_rate, $maxdays, $noticeperiod, $gender_specific, $policy_id);
 
     if ($stmt->execute()) {
-        $success = "Policy deleted successfully!";
+        $_SESSION["success"] = "Policy updated successfully!";
+        header("Location: manpolicy.php");
+        exit;
     } else {
-        $error = "Error deleting policy: " . $stmt->error;
+        $error = "Error updating policy: " . $stmt->error;
     }
-
     $stmt->close();
 }
 
-$sql = "
-        SELECT p.policy_id, p.policy_name, p.description, p.accrual_rate, p.maxdays_peryear, p.noticeperiod_days, p.gender_specific, t.type_name
-        FROM leave_policy p
-        LEFT JOIN leave_type t ON p.type_id = t.type_id
-        ORDER BY p.policy_id ASC";
-
-$policies = $conn->query($sql);
+$leave_types = $conn->query("SELECT type_id, type_name FROM leave_type ORDER BY type_name ASC");
 
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html>
@@ -254,52 +273,52 @@ $conn->close();
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Manage Leave Policies
+                                Edit leave Policies
                             </h2>
                             <div class="row">
                                 <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <table class="table table-hover">
-                                                <thead>
-                                                    <tr class="highlight">
-                                                    <th scope="col">ID</th>
-                                                    <th scope="col">Leave Type</th>
-                                                    <th scope="col">Name</th>
-                                                    <th scope="col">Description</th>
-                                                    <th scope="col">Accrual Rate</th>
-                                                    <th scope="col">Max Days</th>
-                                                    <th scope="col">Notice Period</th>
-                                                    <th scope="col">Gender Specific</th>
-                                                    <th scope="col">Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php if ($policies->num_rows > 0): ?>
-                                                        <?php while ($row = $policies->fetch_assoc()): ?>
-                                                            <tr>
-                                                                <td><?php echo $row['policy_id']; ?></td>
-                                                                <td><?php echo htmlspecialchars($row['first_name']); ?></td>
-                                                                <td><?php echo htmlspecialchars($row['policy_name']); ?></td>
-                                                                <td><?php echo htmlspecialchars($row['description']); ?></td>
-                                                                <td><?php echo htmlspecialchars($row['accrual_rate']); ?></td>
-                                                                <td><?php echo htmlspecialchars($row['maxdays_peryear']); ?></td>
-                                                                <td><?php echo htmlspecialchars($row['noticeperiod_days']); ?></td>
-                                                                <td><?php echo htmlspecialchars($row['gender_specific']); ?></td>
-                                                                <td>
-                                                                    <a href="editpolicy.php?id=<?php echo $row['employee_id']; ?>" class="btn btn-lg"><i class='bx  bx-edit'  style="color: green;"></i> </a>
-                                                                    <a href="manpolicy.php?delete=<?php echo $row['employee_id']; ?>" class="btn btn-lg" onclick="return confirm('Are you sure you want to delete this employee record?');"><i class='bx  bx-trash-x' style="color: red;" ></i> </a>
-                                                                </td>
-                                                            </tr>
-                                                        <?php endwhile; ?>
-                                                    <?php else: ?>
-                                                        <tr>
-                                                            <td colspan="10" class="text-center">No leave policies found</td>
-                                                        </tr>
-                                                    <?php endif; ?>
-                                                </tbody>
-                                            </table>
-                                            <a href="addpolicy.php" class="btn btn-dark">Add New Policy</a>
+                                            <?php if (!empty($success)): ?>
+                                                <div class="alert alert-success"><?php echo $success; ?></div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($error)): ?>
+                                                <div class="alert alert-danger"><?php echo $error; ?></div>
+                                            <?php endif; ?>
+                                            <form method="POST" class="row g-3">
+                                                 <div class="col-md-4">
+                                                    <label for="policy_name" class="form-label">Policy Name</label>
+                                                    <input type="text" class="form-control" id="policy_name" name="policy_name" value="<?php echo htmlspecialchars($policy['policy_name']); ?>" required>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label for="description" class="form-label">Description</label>
+                                                    <textarea class="form-control" id="description" name="description" rows="3"><?php echo htmlspecialchars($policy['description']); ?></textarea>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label for="accrual_rate" class="form-label">Accrual Rate</label>
+                                                    <input type="number" class="form-control" id="accrual_rate" name="accrual_rate" value="<?php echo htmlspecialchars($policy['accrual_rate']); ?>" required>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label for="maxdays_peryear" class="form-label">Max Days</label>
+                                                    <input type="number" class="form-control" id="maxdays_peryear" name="maxdays_peryear" value="<?php echo htmlspecialchars($policy['maxdays_peryear']); ?>" required>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label for="noticeperiod_days" class="form-label">Notice Period (days)</label>
+                                                    <input type="number" class="form-control" id="noticeperiod_days" name="noticeperiod_days" value="<?php echo htmlspecialchars($policy['noticeperiod_days']); ?>" required>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label for="gender_specific" class="form-label">Gender Specific</label>
+                                                    <select id="gender_specific" name="gender_specific" class="form-select">
+                                                        <option value="All" <?php if ($policy['gender_specific'] == "All") echo "selected"; ?>>All</option>
+                                                        <option value="Male" <?php if ($policy['gender_specific'] == "Male") echo "selected"; ?>>Male Only</option>
+                                                        <option value="Female" <?php if ($policy['gender_specific'] == "Female") echo "selected"; ?>>Female Only</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-12">
+                                                    <button type="submit" name="update_policy" class="btn btn-dark">Update Policy</button>
+                                                    <a href="manpolicy.php" class="btn btn-secondary">Cancel</a>
+                                                </div>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
