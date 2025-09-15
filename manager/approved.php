@@ -1,9 +1,7 @@
 <?php
 session_start();
-
-// Redirect if not logged in
-if (!isset($_SESSION["employee_id"])) {
-    header("Location: login.php");
+if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "manager") {
+    header("Location: ../login.php");
     exit;
 }
 
@@ -17,33 +15,32 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$employee_id = $_SESSION["employee_id"];
+$manager_id = $_SESSION["employee_id"];
+$deptResult = $conn->query("SELECT department_id FROM department WHERE manager_id = $manager_id");
+if ($deptResult->num_rows > 0) {
+    $department_id = $deptResult->fetch_assoc()["department_id"];
+} else {
+    die("No department assigned to this manager.");
+}
 
+$query = "
+    SELECT l.request_id, e.first_name, e.last_name, lt.type_name, 
+           l.start_date, l.end_date, l.status
+    FROM leave_request l
+    JOIN employee e ON l.employee_id = e.employee_id
+    JOIN leave_type lt ON l.type_id = lt.type_id
+    WHERE l.status = 'approved' AND e.department_id = $department_id
+    ORDER BY l.start_date DESC
+";
 
-$stmt = $conn->prepare("SELECT employee_id, first_name, last_name, email, department_id, gender, mobile FROM employee WHERE employee_id = ?");
-$stmt->bind_param("i", $employee_id);
-$stmt->execute();
-$stmt->bind_result($employee_id, $first_name, $last_name, $email, $department_id, $gender, $mobile);
-$stmt->fetch();
-$stmt->close();
-
-$dept_name = "N/A";
-$dstmt = $conn->prepare("SELECT department_name FROM department WHERE department_id = ?");
-$dstmt->bind_param("i", $department_id);
-$dstmt->execute();
-$dstmt->bind_result($dept_name);
-$dstmt->fetch();
-$dstmt->close();
-
-
-
+$leaves = $conn->query($query);
 $conn->close();
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Manager Dashboard</title>
+    <title>Leave Requests</title>
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" 
     integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
@@ -147,7 +144,7 @@ $conn->close();
             </aside>
             <div class="main">
                 <nav class="navbar navbar-expand px-4 py-3">
-                    <h6>Manager Profile</h6>
+                    <h6>Requests</h6>
                     <div class="navbar-collapse collapse">
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
@@ -177,12 +174,32 @@ $conn->close();
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Profile
+                                Approved Leave Requests
                             </h2>
                             <div class="row">
                                 <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr class="highlight">
+                                                    <th scope="col">Employee Name</th>
+                                                    <th scope="col">Leave Type</th>
+                                                    <th scope="col">Start Date</th>
+                                                    <th scope="col">End Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php while ($row = $leaves->fetch_assoc()): ?>
+                                                        <tr>
+                                                            <td><?= htmlspecialchars($row['first_name']." ".$row['last_name']); ?></td>
+                                                            <td><?= htmlspecialchars($row['type_name']); ?></td>
+                                                            <td><?= htmlspecialchars($row['start_date']); ?></td>
+                                                            <td><?= htmlspecialchars($row['end_date']); ?></td>
+                                                        </tr>
+                                                    <?php endwhile; ?>
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
                                 </div>
