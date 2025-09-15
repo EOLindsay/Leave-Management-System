@@ -338,6 +338,7 @@ $conn->close();
                                                 </div>
                                                 <div class="col-12">
                                                     <button type="submit" name="add_employee" class="btn btn-dark">Add Employee</button>
+                                                    <a href="manemp.php" class="btn btn-secondary">View Empoyees</a>
                                                 </div>
                                             </form>
                                         </div>

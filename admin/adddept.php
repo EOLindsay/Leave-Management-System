@@ -297,7 +297,7 @@ $conn->close();
                                                 </div>
                                                 <div class="col-12">
                                                     <button type="submit" name="add_department" class="btn btn-dark">Add Department</button>
-                                                    <a href="../admin.php" class="btn btn-secondary">Back</a>
+                                                    <a href="mandept.php" class="btn btn-secondary">View Departments</a>
                                                 </div>
                                             </form>
                                         </div>

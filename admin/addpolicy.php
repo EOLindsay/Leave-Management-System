@@ -329,7 +329,7 @@ $conn->close();
                                                 </div>
                                                 <div class="col-12">
                                                     <button type="submit" name="add_policy" class="btn btn-dark">Add Policy</button>
-                                                    <a href="../admin.php" class="btn btn-secondary">Back</a>
+                                                    <a href="manpolicy.php" class="btn btn-secondary">View Policies</a>
                                                 </div>
                                             </form>
                                         </div>
