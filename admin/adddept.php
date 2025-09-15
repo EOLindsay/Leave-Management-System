@@ -48,7 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_department"])) {
 }
 
 
-$employees = $conn->query("SELECT employee_id, first_name, last_name FROM employee ORDER BY first_name ASC");
+$employees = $conn->query("SELECT employee_id, first_name, last_name FROM employee WHERE role = 'manager' ORDER BY first_name ASC");
 
 $conn->close();
 ?>

@@ -241,7 +241,7 @@ $conn->close();
                                 Approved Leave Requests
                             </h2>
                             <div class="row">
-                                <div class="col-12 col-md-4">
+                                <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
                                             <table class="table table-hover">

@@ -1,15 +1,131 @@
 <?php
 session_start();
-if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
+if (!isset($_SESSION["employee_id"])) {
     header("Location: login.php");
     exit;
 }
+
+$role = $_SESSION["role"];
+$employee_id = $_SESSION["employee_id"];
+
+$host = "localhost";
+$db   = "leave_management";
+$user = "root";
+$pass = "";
+
+$conn = new mysqli($host, $user, $pass, $db);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+if ($role === "manager") {
+    $deptResult = $conn->query("SELECT department_id FROM department WHERE manager_id = $employee_id");
+    if ($deptResult->num_rows > 0) {
+        $manager_dept_id = $deptResult->fetch_assoc()["department_id"];
+    } else {
+        die("You are not assigned to a department.");
+    }
+}
+
+$departments = ($role === "administrator") 
+    ? $conn->query("SELECT department_id, department_name FROM department ORDER BY department_name ASC")
+    : null;
+
+
+if ($role === "administrator") {
+    $employees = $conn->query("SELECT employee_id, first_name, last_name FROM employee ORDER BY first_name ASC");
+} else {
+    $employees = $conn->query("SELECT employee_id, first_name, last_name FROM employee WHERE department_id = $manager_dept_id ORDER BY first_name ASC");
+}
+
+$where = "1=1"; // default
+
+if ($role === "manager") {
+    $where .= " AND e.department_id = $manager_dept_id";
+}
+
+if (!empty($_GET['department_id']) && $role === "administrator") {
+    $dept = intval($_GET['department_id']);
+    $where .= " AND e.department_id = $dept";
+}
+
+if (!empty($_GET['employee_id'])) {
+    $emp = intval($_GET['employee_id']);
+    $where .= " AND e.employee_id = $emp";
+}
+
+if (!empty($_GET['status'])) {
+    $status = $conn->real_escape_string($_GET['status']);
+    $where .= " AND l.status = '$status'";
+}
+
+if (!empty($_GET['start_date']) && !empty($_GET['end_date'])) {
+    $start = $conn->real_escape_string($_GET['start_date']);
+    $end   = $conn->real_escape_string($_GET['end_date']);
+    $where .= " AND l.start_date >= '$start' AND l.end_date <= '$end'";
+}
+
+$query = "
+    SELECT l.request_id, e.first_name, e.last_name, d.department_name, lt.type_name, 
+           l.start_date, l.end_date, l.status
+    FROM leave_request l
+    JOIN employee e ON l.employee_id = e.employee_id
+    JOIN department d ON e.department_id = d.department_id
+    JOIN leave_type lt ON l.type_id = lt.type_id
+    WHERE $where
+    ORDER BY l.start_date DESC
+";
+
+$leaves = $conn->query($query);
+
+if (isset($_GET['export'])) {
+    $result = $conn->query($query);
+
+    if ($_GET['export'] == 'csv') {
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=leave_report.csv');
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['Employee', 'Department', 'Leave Type', 'Start Date', 'End Date', 'Status']);
+
+        while ($row = $result->fetch_assoc()) {
+            fputcsv($output, [
+                $row['first_name']." ".$row['last_name'],
+                $row['department_name'],
+                $row['type_name'],
+                $row['start_date'],
+                $row['end_date'],
+                ucfirst($row['status'])
+            ]);
+        }
+        fclose($output);
+        exit;
+    }
+
+    if ($_GET['export'] == 'excel') {
+        header("Content-Type: application/vnd.ms-excel");
+        header("Content-Disposition: attachment; filename=leave_report.xls");
+        echo "Employee\tDepartment\tLeave Type\tStart Date\tEnd Date\tStatus\n";
+
+        while ($row = $result->fetch_assoc()) {
+            echo $row['first_name']." ".$row['last_name'] . "\t" .
+                 $row['department_name'] . "\t" .
+                 $row['type_name'] . "\t" .
+                 $row['start_date'] . "\t" .
+                 $row['end_date'] . "\t" .
+                 ucfirst($row['status']) . "\n";
+        }
+        exit;
+    }
+}
+
+
+$conn->close();
 ?>
 
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Admin Dashboard</title>
+        <title>Leave Report</title>
         <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" 
         integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
@@ -185,7 +301,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
             </aside>
             <div class="main">
                 <nav class="navbar navbar-expand px-4 py-3">
-                    <h6>Admin Dashboard</h6>
+                    <h6>Report</h6>
                     <div class="navbar-collapse collapse">
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
@@ -215,103 +331,98 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Welcome, <?php echo htmlspecialchars($_SESSION["first_name"]);?>!
+                                Leave Report
                             </h2>
                             <div class="row">
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
-                                        <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
-                                        <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
-                                        <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
                                 <div class="col-12">
-                                    <h3 class="fw-bold fs-4 my-3">leave Requests</h3>
-                                    <table class="table table-striped-columns">
-                                        <thead>
-                                            <tr class="highlight">
-                                            <th scope="col">#</th>
-                                            <th scope="col">First</th>
-                                            <th scope="col">Last</th>
-                                            <th scope="col">Handle</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                            <th scope="row">1</th>
-                                            <td>Mark</td>
-                                            <td>Otto</td>
-                                            <td>@mdo</td>
-                                            </tr>
-                                            <tr>
-                                            <th scope="row">2</th>
-                                            <td>Jacob</td>
-                                            <td>Thornton</td>
-                                            <td>@fat</td>
-                                            </tr>
-                                            <tr>
-                                            <th scope="row">3</th>
-                                            <td>John</td>
-                                            <td>Doe</td>
-                                            <td>@social</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                    <div class="card shadow">
+                                        <div class="card-body py-4">
+                                            <form method="GET" class="row g-3 mb-4">
+                                                <?php if ($role === "administrator"): ?>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label">Department</label>
+                                                        <select name="department_id" class="form-select">
+                                                            <option value="">All</option>
+                                                            <?php while ($d = $departments->fetch_assoc()): ?>
+                                                                <option value="<?= $d['department_id']; ?>" <?= (isset($_GET['department_id']) && $_GET['department_id']==$d['department_id'])?'selected':'' ?>>
+                                                                    <?= htmlspecialchars($d['department_name']); ?>
+                                                                </option>
+                                                            <?php endwhile; ?>
+                                                        </select>
+                                                    </div>
+                                                <?php endif; ?>
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Employee</label>
+                                                    <select name="employee_id" class="form-select">
+                                                        <option value="">All</option>
+                                                        <?php while ($e = $employees->fetch_assoc()): ?>
+                                                            <option value="<?= $e['employee_id']; ?>" <?= (isset($_GET['employee_id']) && $_GET['employee_id']==$e['employee_id'])?'selected':'' ?>>
+                                                                <?= htmlspecialchars($e['first_name']." ".$e['last_name']); ?>
+                                                            </option>
+                                                        <?php endwhile; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">Status</label>
+                                                    <select name="status" class="form-select">
+                                                        <option value="">All</option>
+                                                        <option value="pending" <?= (isset($_GET['status']) && $_GET['status']=='pending')?'selected':'' ?>>Pending</option>
+                                                        <option value="approved" <?= (isset($_GET['status']) && $_GET['status']=='approved')?'selected':'' ?>>Approved</option>
+                                                        <option value="rejected" <?= (isset($_GET['status']) && $_GET['status']=='rejected')?'selected':'' ?>>Rejected</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">Start Date</label>
+                                                    <input type="date" name="start_date" class="form-control" value="<?= $_GET['start_date'] ?? '' ?>">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">End Date</label>
+                                                    <input type="date" name="end_date" class="form-control" value="<?= $_GET['end_date'] ?? '' ?>">
+                                                </div>
+                                                <div class="col-md-2 d-flex align-items-end">
+                                                    <button type="submit" class="btn btn-dark w-100">Generate</button>
+                                                </div>
+                                                <div class="col-md-2 d-flex align-items-end">
+                                                    <button type="submit" name="export" value="csv" class="btn btn-success w-100">Export CSV</button>
+                                                </div>
+                                                <div class="col-md-2 d-flex align-items-end">
+                                                    <button type="submit" name="export" value="excel" class="btn btn-primary w-100">Export Excel</button>
+                                                </div>
+                                            </form>
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr class="highlight">
+                                                        <th scope="col">Employee Name</th>
+                                                        <th scope="col">Department</th>
+                                                        <th scope="col">Leave Type</th>
+                                                        <th scope="col">Start Date</th>
+                                                        <th scope="col">End Date</th>
+                                                        <th scope="col">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php while ($row = $leaves->fetch_assoc()): ?>
+                                                        <tr>
+                                                            <td><?= htmlspecialchars($row['first_name']." ".$row['last_name']); ?></td>
+                                                            <td><?= htmlspecialchars($row['department_name']); ?></td>
+                                                            <td><?= htmlspecialchars($row['type_name']); ?></td>
+                                                            <td><?= htmlspecialchars($row['start_date']); ?></td>
+                                                            <td><?= htmlspecialchars($row['end_date']); ?></td>
+                                                            <td>
+                                                                <?php if ($row['status']=='approved'): ?>
+                                                                    <span class="badge bg-success">Approved</span>
+                                                                <?php elseif ($row['status']=='pending'): ?>
+                                                                    <span class="badge bg-warning text-dark">Pending</span>
+                                                                <?php else: ?>
+                                                                    <span class="badge bg-danger">Rejected</span>
+                                                                <?php endif; ?>
+                                                            </td>
+                                                        </tr>
+                                                    <?php endwhile; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -320,6 +431,6 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
             </div>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-        <script src="assets/js/dashboard.js"></script>
+        <script src="../assets/js/dashboard.js"></script>
     </body>
 </html>
