@@ -4,6 +4,68 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "manager") {
     header("Location: login.php");
     exit;
 }
+
+$host = "localhost";
+$db   = "leave_management";
+$user = "root";
+$pass = "";
+
+$conn = new mysqli($host, $user, $pass, $db);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+$employee_id = $_SESSION["employee_id"];
+
+$stmt = $conn->prepare("SELECT department_id FROM department WHERE manager_id = ?");
+$stmt->bind_param("i", $employee_id);
+$stmt->execute();
+$stmt->bind_result($manager_dept_id);
+$stmt->fetch();
+$stmt->close();
+
+$department_name = "Unassigned";
+if ($manager_dept_id) {
+    $stmt = $conn->prepare("SELECT department_name FROM department WHERE department_id = ?");
+    $stmt->bind_param("i", $manager_dept_id);
+    $stmt->execute();
+    $stmt->bind_result($department_name);
+    $stmt->fetch();
+    $stmt->close();
+}
+
+$total_employees = $conn->query("SELECT COUNT(*) AS total 
+    FROM employee 
+    WHERE department_id=$manager_dept_id")->fetch_assoc()['total'];
+
+$total_leave_types = $conn->query("SELECT COUNT(*) AS total FROM leave_type")->fetch_assoc()['total'];
+
+$total_leaves = $conn->query("SELECT COUNT(*) AS total 
+    FROM leave_request l 
+    JOIN employee e ON l.employee_id = e.employee_id 
+    WHERE e.department_id=$manager_dept_id")->fetch_assoc()['total'];
+
+$total_approved = $conn->query("SELECT COUNT(*) AS total 
+    FROM leave_request l 
+    JOIN employee e ON l.employee_id = e.employee_id 
+    WHERE e.department_id=$manager_dept_id AND l.status='approved'")->fetch_assoc()['total'];
+
+$total_new = $conn->query("SELECT COUNT(*) AS total 
+    FROM leave_request l 
+    JOIN employee e ON l.employee_id = e.employee_id 
+    WHERE e.department_id=$manager_dept_id AND l.status='pending'")->fetch_assoc()['total'];
+
+$recent_leaves = $conn->query("
+    SELECT l.request_id, e.first_name, e.last_name, lt.type_name, l.start_date, l.end_date, l.status
+    FROM leave_request l
+    JOIN employee e ON l.employee_id = e.employee_id
+    JOIN leave_type lt ON l.type_id = lt.type_id
+    WHERE e.department_id=$manager_dept_id
+    ORDER BY l.request_id DESC
+    LIMIT 5
+");
+
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -149,60 +211,36 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "manager") {
                                 <div class="col-12 col-md-4">
                                     <div class="card effect shadow">
                                         <div class="card-body py-4">
-                                            <h6 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h6>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
+                                            <h5 class="mb-2 card-title fw-bold">
+                                                Department Name
+                                            </h5>
+                                            <h3 class="card_text mb-2">
+                                                <?php echo ($department_name); ?>
+                                            </h3>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4">
                                     <div class="card effect shadow">
                                         <div class="card-body py-4">
-                                            <h6 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h6>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
+                                            <h5 class="mb-2 card-title fw-bold">
+                                                Number of Employees
+                                            </h5>
+                                            <h3 class="card_text  mb-2">
+                                                <?php echo $total_employees; ?>
+                                            </h3>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4">
                                     <div class="card effect shadow">
                                         <div class="card-body py-4">
-                                            <h6 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h6>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
+                                            <h5 class="mb-2 card-title fw-bold">
+                                                Number of Leave Types
+                                            </h5>
+                                            <h3 class="card_text mb-2">
+                                                <?php echo $total_leave_types; ?>
+                                            </h3>
                                         </div>
                                     </div>
                                 </div>
@@ -211,95 +249,63 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "manager") {
                                 <div class="col-12 col-md-4">
                                     <div class="card effect shadow">
                                         <div class="card-body py-4">
-                                            <h6 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h6>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
+                                            <h5 class="mb-2 card-title fw-bold">
+                                                All Leaves
+                                            </h5>
+                                            <h3 class="card_text mb-2">
+                                                <?php echo $total_leaves; ?>
+                                            </h3>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4">
                                     <div class="card effect shadow">
                                         <div class="card-body py-4">
-                                            <h6 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h6>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
+                                            <h5 class="mb-2 card-title fw-bold">
+                                                Number of Approved Leaves
+                                            </h5>
+                                            <h3 class="card_text  mb-2">
+                                                <?php echo $total_approved; ?>
+                                            </h3>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4">
                                     <div class="card effect shadow">
                                         <div class="card-body py-4">
-                                            <h6 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h6>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
+                                            <h5 class="mb-2 card-title fw-bold">
+                                                Number of New Applications
+                                            </h5>
+                                            <h3 class="card_text mb-2">
+                                                <?php echo $total_new; ?>
+                                            </h3>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-12">
-                                    <h3 class="fw-bold fs-4 my-3">Users</h3>
-                                    <table class="table table-striped-columns">
+                                    <h3 class="fw-bold fs-4 my-3">Recent Leave Applications</h3>
+                                    <table class="table table-hover">
                                         <thead>
                                             <tr class="highlight">
-                                            <th scope="col">#</th>
-                                            <th scope="col">First</th>
-                                            <th scope="col">Last</th>
-                                            <th scope="col">Handle</th>
+                                            <th scope="col">Employee Name</th>
+                                            <th scope="col">Leave Type</th>
+                                            <th scope="col">Start Date</th>
+                                            <th scope="col">End Date</th>
+                                            <th scope="col">Status</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr>
-                                            <th scope="row">1</th>
-                                            <td>Mark</td>
-                                            <td>Otto</td>
-                                            <td>@mdo</td>
-                                            </tr>
-                                            <tr>
-                                            <th scope="row">2</th>
-                                            <td>Jacob</td>
-                                            <td>Thornton</td>
-                                            <td>@fat</td>
-                                            </tr>
-                                            <tr>
-                                            <th scope="row">3</th>
-                                            <td>John</td>
-                                            <td>Doe</td>
-                                            <td>@social</td>
-                                            </tr>
+                                            <?php while ($row = $recent_leaves->fetch_assoc()): ?>
+                                                <tr>
+                                                    <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
+                                                    <td><?php echo htmlspecialchars($row['type_name']); ?></td>
+                                                    <td><?php echo htmlspecialchars($row['start_date']); ?></td>
+                                                    <td><?php echo htmlspecialchars($row['end_date']); ?></td>
+                                                    <td><?php echo htmlspecialchars($row['status']); ?></td>
+                                                </tr>
+                                            <?php endwhile; ?>
                                         </tbody>
                                     </table>
                                 </div>
