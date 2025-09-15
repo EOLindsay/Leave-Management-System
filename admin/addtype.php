@@ -1,15 +1,64 @@
 <?php
 session_start();
-if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
+
+if (!isset($_SESSION["employee_id"])) {
     header("Location: login.php");
     exit;
 }
+
+$host = "localhost";
+$db   = "leave_management";
+$user = "root";
+$pass = "";
+
+$conn = new mysqli($host, $user, $pass, $db);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+$success = "";
+$error   = "";
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_type"])) {
+    $type_id       = trim($_POST["type_id"]);
+    $type_name     = trim($_POST["type_name"]);
+    $description   = trim($_POST["description"]);
+    $requires_approval = isset($_POST["requires_approval"]) ? 1 : 0;
+    $default_accrual = trim($_POST["default_accrualrate_perperiod"]);
+    $max_carryover = trim($_POST["max_carryover_days"]);
+
+    if (!empty($type_id) && !empty($type_name)) {
+        $stmt = $conn->prepare("INSERT INTO leave_type 
+            (type_id, type_name, description, requires_approval, default_accrualrate_perperiod, max_carryover_days) 
+            VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("issiii", $type_id, $type_name, $description, $requires_approval, $default_accrual, $max_carryover);
+
+        if ($stmt->execute()) {
+            $_SESSION["success"] = "✅ Leave type added successfully!";
+            header("Location: addtype.php");
+            exit;
+        } else {
+            $error = "❌ Error: " . $stmt->error;
+        }
+
+        $stmt->close();
+    } else {
+        $error = "❌ Leave Type ID and Name are required!";
+    }
+}
+
+if (isset($_SESSION["success"])) {
+    $success = $_SESSION["success"];
+    unset($_SESSION["success"]);
+}
+
+$conn->close();
 ?>
 
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Admin Dashboard</title>
+        <title>Leaves</title>
         <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" 
         integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
@@ -24,7 +73,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
             <aside id="sidebar">
                 <div class="d-flex justify-content-between p-4">
                     <div class="sidebar-logo">
-                         <a href="#"><img src="../assets/img/logolight.png" style="width: 166px; height: 50.8px;" alt=" SeamLess Leave"></a> 
+                         <a href="../admin.php"><img src="../assets/img/logolight.png" style="width: 166px; height: 50.8px;" alt=" SeamLess Leave"></a> 
                     </div>
                     <button class="toggle-btn border-0" type="button">
                         <i id="icon" class="bx bxs-chevrons-right"></i>
@@ -38,7 +87,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
+                        <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" 
                         data-bs-target="#dept" aria-expanded="false" aria-controls="dept">
                             <i class="bx bx-building"></i>
                             <span>Departments</span>
@@ -185,7 +234,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
             </aside>
             <div class="main">
                 <nav class="navbar navbar-expand px-4 py-3">
-                    <h6>Admin Dashboard</h6>
+                    <h6>Types</h6>
                     <div class="navbar-collapse collapse">
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
@@ -215,103 +264,47 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Welcome, <?php echo htmlspecialchars($_SESSION["first_name"]);?>!
+                                Add Leave Type
                             </h2>
                             <div class="row">
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
+                                <div class="col-12 col-md-7">
+                                    <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
+                                            <form method="POST" class="row g-3">
+                                               <div class="col-md-3">
+                                                    <label for="type_id" class="form-label">Leave Type ID</label>
+                                                    <input type="number" class="form-control" id="type_id" name="type_id" required>
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <label for="type_name" class="form-label">Leave Type Name</label>
+                                                    <input type="text" class="form-control" id="type_name" name="type_name" required>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label for="description" class="form-label">Description</label>
+                                                    <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="requires_approval" class="form-label">Requires Approval</label><br>
+                                                    <input type="checkbox" id="requires_approval" name="requires_approval"> Yes
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="default_accrualrate_perperiod" class="form-label">Accrual Rate (per period)</label>
+                                                    <input type="number" class="form-control" id="default_accrualrate_perperiod" name="default_accrualrate_perperiod" required>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="max_carryover_days" class="form-label">Max Carryover Days</label>
+                                                    <input type="number" class="form-control" id="max_carryover_days" name="max_carryover_days" required>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label for="noticeperiod_days" class="form-label">Notice Period (days)</label>
+                                                    <input type="number" class="form-control" id="noticeperiod_days" name="noticeperiod_days" required>
+                                                </div>
+                                                <div class="col-12">
+                                                    <button type="submit" name="add_type" class="btn btn-dark">Add Type</button>
+                                                </div>
+                                            </form>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
-                                        <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
-                                        <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-12">
-                                    <h3 class="fw-bold fs-4 my-3">leave Requests</h3>
-                                    <table class="table table-striped-columns">
-                                        <thead>
-                                            <tr class="highlight">
-                                            <th scope="col">#</th>
-                                            <th scope="col">First</th>
-                                            <th scope="col">Last</th>
-                                            <th scope="col">Handle</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                            <th scope="row">1</th>
-                                            <td>Mark</td>
-                                            <td>Otto</td>
-                                            <td>@mdo</td>
-                                            </tr>
-                                            <tr>
-                                            <th scope="row">2</th>
-                                            <td>Jacob</td>
-                                            <td>Thornton</td>
-                                            <td>@fat</td>
-                                            </tr>
-                                            <tr>
-                                            <th scope="row">3</th>
-                                            <td>John</td>
-                                            <td>Doe</td>
-                                            <td>@social</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -320,6 +313,6 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
             </div>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-        <script src="assets/js/dashboard.js"></script>
+        <script src="../assets/js/dashboard.js"></script>
     </body>
 </html>
