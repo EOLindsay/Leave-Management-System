@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== 'administrator') {
+if (!isset($_SESSION["employee_id"])) {
     header("Location: ../login.php");
     exit;
 }
@@ -19,30 +19,70 @@ if ($conn->connect_error) {
 $success = "";
 $error   = "";
 
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_role"])) {
-    $employee_id = intval($_POST["employee_id"]);
-    $role        = trim($_POST["role"]);
+$role = $_SESSION["role"];
+$employee_id = $_SESSION["employee_id"];
 
-    if (!empty($employee_id) && !empty($role)) {
-        $stmt = $conn->prepare("UPDATE employee SET role=? WHERE employee_id=?");
-        $stmt->bind_param("si", $role, $employee_id);
-
-        if ($stmt->execute()) {
-            $success = "Role updated successfully!";
-        } else {
-            $error = "Error updating role: " . $stmt->error;
-        }
-        $stmt->close();
-    } else {
-        $error = "Please select an employee and a role.";
-    }
+$manager_department_id = null;
+if ($role === "manager") {
+    $deptQuery = $conn->prepare("SELECT department_id FROM employee WHERE employee_id=?");
+    $deptQuery->bind_param("i", $employee_id);
+    $deptQuery->execute();
+    $deptQuery->bind_result($manager_department_id);
+    $deptQuery->fetch();
+    $deptQuery->close();
 }
 
-$employees = $conn->query("
-    SELECT employee_id, first_name, last_name, email, role 
-    FROM employee 
-    ORDER BY first_name ASC
-");
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_role"])) {
+    $target_employee_id = intval($_POST["employee_id"]);
+    $new_role = $_POST["role"];
+
+    if ($role === "administrator") {
+        $stmt = $conn->prepare("UPDATE employee SET role=? WHERE employee_id=?");
+        $stmt->bind_param("si", $new_role, $target_employee_id);
+        $stmt->execute();
+        $stmt->close();
+        $_SESSION["success"] = "Role updated successfully!";
+    } elseif ($role === "manager") {
+
+        if ($new_role === "administrator") {
+            $_SESSION["error"] = "Managers cannot assign Administrator role.";
+        } else {
+
+            $check = $conn->prepare("SELECT department_id FROM employee WHERE employee_id=?");
+            $check->bind_param("i", $target_employee_id);
+            $check->execute();
+            $check->bind_result($emp_dept);
+            $check->fetch();
+            $check->close();
+
+            if ($emp_dept == $manager_department_id) {
+                $stmt = $conn->prepare("UPDATE employee SET role=? WHERE employee_id=?");
+                $stmt->bind_param("si", $new_role, $target_employee_id);
+                $stmt->execute();
+                $stmt->close();
+                $_SESSION["success"] = "Role updated successfully!";
+            } else {
+                $_SESSION["error"] = "You cannot change roles of employees outside your department.";
+            }
+        }
+    } else {
+        $_SESSION["error"] = "You do not have permission to update roles.";
+    }
+
+    header("Location: grantp.php");
+    exit;
+}
+
+if ($role === "administrator") {
+    $employees = $conn->query("SELECT employee_id, first_name, last_name, email, role, department_id FROM employee ORDER BY first_name ASC");
+} elseif ($role === "manager") {
+    $stmt = $conn->prepare("SELECT employee_id, first_name, last_name, email, role, department_id FROM employee WHERE department_id=? ORDER BY first_name ASC");
+    $stmt->bind_param("i", $manager_department_id);
+    $stmt->execute();
+    $employees = $stmt->get_result();
+} else {
+    die("Access denied.");
+}
 
 $conn->close();
 ?>
@@ -290,7 +330,9 @@ $conn->close();
                                                                     <select name="role" class="form-select" required>
                                                                         <option value="employee" <?php if ($row['role'] == 'employee') echo 'selected'; ?>>Employee</option>
                                                                         <option value="manager" <?php if ($row['role'] == 'manager') echo 'selected'; ?>>Manager</option>
-                                                                        <option value="administrator" <?php if ($row['role'] == 'administrator') echo 'selected'; ?>>Administrator</option>
+                                                                        <?php if ($role === "administrator"): ?>
+                                                                            <option value="administrator" <?php if ($row['role'] === 'administrator') echo 'selected'; ?>>Administrator</option>
+                                                                        <?php endif; ?>
                                                                     </select>
                                                                 </td>
                                                                 <td>
