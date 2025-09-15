@@ -18,26 +18,26 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Handle form submission
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_employee"])) {
     $first_name   = trim($_POST["first_name"]);
     $last_name    = trim($_POST["last_name"]);
     $email        = trim($_POST["email"]);
     $username     = trim($_POST["username"]);
-    $password     = password_hash($_POST["password"], PASSWORD_DEFAULT); // hash password
+    $password     = password_hash($_POST["password"], PASSWORD_DEFAULT); 
     $department_id= $_POST["department_id"];
     $gender       = $_POST["gender"];
     $mobile       = $_POST["mobile"];
     $role         = $_POST["role"];
+    $hire_date         = $_POST["hire_date"];
 
     if (!empty($first_name) && !empty($last_name) && !empty($email) && !empty($username) && !empty($_POST["password"])) {
-        $stmt = $conn->prepare("INSERT INTO employee (first_name, last_name, email, username, password, department_id, gender, mobile, role) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssssssss", $first_name, $last_name, $email, $username, $password, $department_id, $gender, $mobile, $role);
+        $stmt = $conn->prepare("INSERT INTO employee (first_name, last_name, email, username, password, department_id, gender, mobile, role, hire_date) 
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssssssss", $first_name, $last_name, $email, $username, $password, $department_id, $gender, $mobile, $role, $hire_date);
 
         if ($stmt->execute()) {
             $_SESSION["success"] = "Employee added successfully ✅";
-            header("Location: addemployee.php");
+            header("Location: addemp.php");
             exit;
         } else {
             $error = "Error: " . $stmt->error;
@@ -48,6 +48,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_employee"])) {
         $error = "All required fields must be filled ❌";
     }
 }
+
+$departments = $conn->query("SELECT department_id, department_name FROM department ORDER BY department_name ASC");
 
 $conn->close();
 ?>
@@ -304,6 +306,10 @@ $conn->close();
                                                         </option>
                                                     </select>
                                                 </div>
+                                                <div class="col-6">
+                                                    <label for="hire_date" class="form-label">Hire Date</label>
+                                                    <input type="date" class="form-control" id="hire_date" name="hire_date" required>
+                                                </div>
                                                 <div class="col-md-6">
                                                     <label class="form-label">Department</label>
                                                     <select class="form-select" name="department_id" required>
@@ -338,6 +344,6 @@ $conn->close();
             </div>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-        <script src="assets/js/dashboard.js"></script>
+        <script src="../assets/js/dashboard.js"></script>
     </body>
 </html>

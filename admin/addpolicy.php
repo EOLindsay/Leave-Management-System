@@ -1,9 +1,48 @@
 <?php
 session_start();
-if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
+
+if (!isset($_SESSION["employee_id"])) {
     header("Location: login.php");
     exit;
 }
+
+$host = "localhost";
+$db   = "leave_management";
+$user = "root";
+$pass = "";
+
+$conn = new mysqli($host, $user, $pass, $db);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_policy"])) {
+    $policy_name   = trim($_POST["policy_name"]);
+    $description   = trim($_POST["description"]);
+    $max_leaves    = intval($_POST["max_leaves"]);
+    $department_id = $_POST["department_id"] ?: null; 
+
+    if (!empty($policy_name) && $max_leaves > 0) {
+        $stmt = $conn->prepare("INSERT INTO policy (policy_name, description, max_leaves, department_id) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("ssii", $policy_name, $description, $max_leaves, $department_id);
+
+        if ($stmt->execute()) {
+            $_SESSION["success"] = "Policy added successfully ✅";
+            header("Location: addpolicy.php");
+            exit;
+        } else {
+            $error = "Error: " . $stmt->error;
+        }
+
+        $stmt->close();
+    } else {
+        $error = "Policy name and max leaves are required ❌";
+    }
+}
+
+$departments = $conn->query("SELECT department_id, department_name FROM department ORDER BY department_name ASC");
+
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -320,6 +359,6 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
             </div>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-        <script src="assets/js/dashboard.js"></script>
+        <script src="../assets/js/dashboard.js"></script>
     </body>
 </html>

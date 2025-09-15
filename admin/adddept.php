@@ -18,17 +18,24 @@ if ($conn->connect_error) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_department"])) {
-    $department_id = trim($_POST["department_id"]);
+    $department_id   = trim($_POST["department_id"]);
     $department_name = trim($_POST["department_name"]);
-    $manager_id      = trim($_POST["manager_id"]);
+    $manager_id      = !empty($_POST["manager_id"]) ? $_POST["manager_id"] : null;
 
     if (!empty($department_id) && !empty($department_name)) {
-        $stmt = $conn->prepare("INSERT INTO department (department_id, department_name, manager_id) VALUES (?, ?, ?)");
-        $stmt->bind_param("isi", $department_id, $department_name, $manager_id);
+        if ($manager_id === null) {
+
+            $stmt = $conn->prepare("INSERT INTO department (department_id, department_name, manager_id) VALUES (?, ?, NULL)");
+            $stmt->bind_param("is", $department_id, $department_name);
+        } else {
+
+            $stmt = $conn->prepare("INSERT INTO department (department_id, department_name, manager_id) VALUES (?, ?, ?)");
+            $stmt->bind_param("isi", $department_id, $department_name, $manager_id);
+        }
 
         if ($stmt->execute()) {
             $_SESSION["success"] = "Department added successfully ✅";
-            header("Location: adddepartment.php");
+            header("Location: adddept.php");
             exit;
         } else {
             $error = "Error: " . $stmt->error;
@@ -39,6 +46,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_department"])) {
         $error = "Department ID and Name cannot be empty ❌";
     }
 }
+
+
+$employees = $conn->query("SELECT employee_id, first_name, last_name FROM employee ORDER BY first_name ASC");
 
 $conn->close();
 ?>
