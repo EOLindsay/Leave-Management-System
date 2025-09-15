@@ -36,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_employee"])) {
         $stmt->bind_param("ssssssssss", $first_name, $last_name, $email, $username, $password, $department_id, $gender, $mobile, $role, $hire_date);
 
         if ($stmt->execute()) {
-            $_SESSION["success"] = "Employee added successfully ✅";
+            $_SESSION["success"] = "Employee added successfully";
             header("Location: addemp.php");
             exit;
         } else {
@@ -45,7 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_employee"])) {
 
         $stmt->close();
     } else {
-        $error = "All required fields must be filled ❌";
+        $error = "All required fields must be filled";
     }
 }
 

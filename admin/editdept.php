@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-
 if (!isset($_SESSION["employee_id"])) {
     header("Location: login.php");
     exit;
@@ -17,36 +16,43 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_department"])) {
-    $department_id   = trim($_POST["department_id"]);
+$success = "";
+$error   = "";
+
+if (!isset($_GET['id'])) {
+    die("Department ID not provided!");
+}
+
+$department_id = intval($_GET['id']);
+
+$stmt = $conn->prepare("SELECT department_name, manager_id FROM department WHERE department_id = ?");
+$stmt->bind_param("i", $department_id);
+$stmt->execute();
+$stmt->bind_result($department_name, $manager_id);
+$stmt->fetch();
+$stmt->close();
+
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_department"])) {
     $department_name = trim($_POST["department_name"]);
     $manager_id      = !empty($_POST["manager_id"]) ? $_POST["manager_id"] : null;
 
-    if (!empty($department_id) && !empty($department_name)) {
-        if ($manager_id === null) {
-
-            $stmt = $conn->prepare("INSERT INTO department (department_id, department_name, manager_id) VALUES (?, ?, NULL)");
-            $stmt->bind_param("is", $department_id, $department_name);
-        } else {
-
-            $stmt = $conn->prepare("INSERT INTO department (department_id, department_name, manager_id) VALUES (?, ?, ?)");
-            $stmt->bind_param("isi", $department_id, $department_name, $manager_id);
-        }
-
-        if ($stmt->execute()) {
-            $_SESSION["success"] = "Department added successfully";
-            header("Location: adddept.php");
-            exit;
-        } else {
-            $error = "Error: " . $stmt->error;
-        }
-
-        $stmt->close();
+    if ($manager_id === null) {
+        $update = $conn->prepare("UPDATE department SET department_name = ?, manager_id = NULL WHERE department_id = ?");
+        $update->bind_param("si", $department_name, $department_id);
     } else {
-        $error = "Department ID and Name cannot be empty";
+        $update = $conn->prepare("UPDATE department SET department_name = ?, manager_id = ? WHERE department_id = ?");
+        $update->bind_param("sii", $department_name, $manager_id, $department_id);
     }
-}
 
+    if ($update->execute()) {
+        $success = "Department updated successfully!";
+    } else {
+        $error = "Error: " . $update->error;
+    }
+
+    $update->close();
+}
 
 $employees = $conn->query("SELECT employee_id, first_name, last_name FROM employee ORDER BY first_name ASC");
 
@@ -263,35 +269,38 @@ $conn->close();
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Add Department
+                                Edit Department
                             </h2>
                             <div class="row">
-                                <div class="col-12 col-md-7">
+                                <div class="col-md-8">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <form method="POST" action="" class="row g-3">
-                                                <div class="col-8">
-                                                    <label for="department_id" class="form-label">DepartmentID</label>
-                                                    <input type="number" class="form-control" id="department_id" name="department_id" required>
+                                            <?php if (!empty($success)): ?>
+                                                <div class="alert alert-success"><?php echo $success; ?></div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($error)): ?>
+                                                <div class="alert alert-danger"><?php echo $error; ?></div>
+                                            <?php endif; ?>
+                                            <form method="POST">
+                                                <div class="mb-3">
+                                                    <label for="department_name" class="form-label">Department Name</label>
+                                                    <input type="text" class="form-control" id="department_name" name="department_name"
+                                                    value="<?php echo htmlspecialchars($department_name); ?>" required>
                                                 </div>
-                                                <div class="col-8">
-                                                    <label for="department_name" class="form-label"l>Department Name</label>
-                                                    <input type="text" class="form-control" id="department_name" name="department_name" required>
-                                                </div>
-                                                <div class="col-6">
-                                                    <label for="manager_id" class="form-label">Assign Manager</label>
+                                                <div class="mb-3">
+                                                    <label for="manager_id" class="form-label">Manager</label>
                                                     <select id="manager_id" name="manager_id" class="form-select">
-                                                        <option value="">-- Select Manager --</option>
+                                                        <option value="">-- No Manager --</option>
                                                         <?php while ($row = $employees->fetch_assoc()): ?>
-                                                            <option value="<?php echo $row['employee_id']; ?>">
+                                                            <option value="<?php echo $row['employee_id']; ?>"
+                                                                <?php echo ($row['employee_id'] == $manager_id) ? "selected" : ""; ?>>
                                                                 <?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?>
                                                             </option>
                                                         <?php endwhile; ?>
                                                     </select>
                                                 </div>
-                                                <div class="col-12">
-                                                    <button type="submit" name="add_department" class="btn btn-dark">Add Department</button>
-                                                </div>
+                                                <button type="submit" name="update_department" class="btn btn-dark">Update Department</button>
+                                                <a href="mandept.php" class="btn btn-secondary">Back</a>
                                             </form>
                                         </div>
                                     </div>

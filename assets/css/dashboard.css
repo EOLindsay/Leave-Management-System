@@ -180,8 +180,8 @@ a.sidebar-link:hover{
     text-align: left;
 }
 tr.highlight th{
-    background-color: #3c4d40;
-    color: #FFF;
+    background-color: #c0d4c5;
+    color: #000;
 }
 .content{
     flex: 11 auto;

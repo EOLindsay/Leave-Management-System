@@ -37,16 +37,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_policy"])) {
         $stmt->bind_param("iissiiis", $policy_id, $type_id, $policy_name, $description, $accrual_rate, $max_days, $notice_period, $gender_specific);
 
         if ($stmt->execute()) {
-            $_SESSION["success"] = "✅ Leave Policy added successfully!";
+            $_SESSION["success"] = "Leave Policy added successfully!";
             header("Location: addpolicy.php");
             exit;
         } else {
-            $error = "❌ Error: " . $stmt->error;
+            $error = "Error: " . $stmt->error;
         }
 
         $stmt->close();
     } else {
-        $error = "❌ Policy ID, Leave Type, and Name are required!";
+        $error = "Policy ID, Leave Type, and Name are required!";
     }
 }
 

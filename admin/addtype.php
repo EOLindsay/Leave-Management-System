@@ -34,16 +34,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_type"])) {
         $stmt->bind_param("issiii", $type_id, $type_name, $description, $requires_approval, $default_accrual, $max_carryover);
 
         if ($stmt->execute()) {
-            $_SESSION["success"] = "✅ Leave type added successfully!";
+            $_SESSION["success"] = "Leave type added successfully!";
             header("Location: addtype.php");
             exit;
         } else {
-            $error = "❌ Error: " . $stmt->error;
+            $error = "Error: " . $stmt->error;
         }
 
         $stmt->close();
     } else {
-        $error = "❌ Leave Type ID and Name are required!";
+        $error = "Leave Type ID and Name are required!";
     }
 }
 
