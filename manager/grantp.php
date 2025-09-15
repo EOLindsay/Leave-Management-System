@@ -1,9 +1,8 @@
 <?php
 session_start();
 
-// Redirect if not logged in
-if (!isset($_SESSION["employee_id"])) {
-    header("Location: login.php");
+if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== 'manager') {
+    header("Location: ../login.php");
     exit;
 }
 
@@ -17,25 +16,33 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$employee_id = $_SESSION["employee_id"];
+$success = "";
+$error   = "";
 
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_role"])) {
+    $employee_id = intval($_POST["employee_id"]);
+    $role        = trim($_POST["role"]);
 
-$stmt = $conn->prepare("SELECT employee_id, first_name, last_name, email, department_id, gender, mobile FROM employee WHERE employee_id = ?");
-$stmt->bind_param("i", $employee_id);
-$stmt->execute();
-$stmt->bind_result($employee_id, $first_name, $last_name, $email, $department_id, $gender, $mobile);
-$stmt->fetch();
-$stmt->close();
+    if (!empty($employee_id) && !empty($role)) {
+        $stmt = $conn->prepare("UPDATE employee SET role=? WHERE employee_id=?");
+        $stmt->bind_param("si", $role, $employee_id);
 
-$dept_name = "N/A";
-$dstmt = $conn->prepare("SELECT department_name FROM department WHERE department_id = ?");
-$dstmt->bind_param("i", $department_id);
-$dstmt->execute();
-$dstmt->bind_result($dept_name);
-$dstmt->fetch();
-$dstmt->close();
+        if ($stmt->execute()) {
+            $success = "Role updated successfully!";
+        } else {
+            $error = "Error updating role: " . $stmt->error;
+        }
+        $stmt->close();
+    } else {
+        $error = "Please select an employee and a role.";
+    }
+}
 
-
+$employees = $conn->query("
+    SELECT employee_id, first_name, last_name, email, role 
+    FROM employee 
+    ORDER BY first_name ASC
+");
 
 $conn->close();
 ?>
@@ -43,7 +50,7 @@ $conn->close();
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Manager Dashboard</title>
+    <title>Leaves</title>
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" 
     integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
@@ -147,7 +154,7 @@ $conn->close();
             </aside>
             <div class="main">
                 <nav class="navbar navbar-expand px-4 py-3">
-                    <h6>Manager Profile</h6>
+                    <h6>Permissions</h6>
                     <div class="navbar-collapse collapse">
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
@@ -177,12 +184,51 @@ $conn->close();
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Profile
+                                Grant User Permissions
                             </h2>
                             <div class="row">
                                 <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
+                                            <?php if ($success): ?>
+                                                <div class="alert alert-success"><?php echo $success; ?></div>
+                                            <?php endif; ?>
+                                            <?php if ($error): ?>
+                                                <div class="alert alert-danger"><?php echo $error; ?></div>
+                                            <?php endif; ?>
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr class="highlight">
+                                                    <th scope="col">Employee</th>
+                                                    <th scope="col">Email</th>
+                                                    <th scope="col">Current Role</th>
+                                                    <th scope="col">Change Role</th>
+                                                    <th scope="col">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php while ($row = $employees->fetch_assoc()): ?>
+                                                        <tr>
+                                                            <form method="POST">
+                                                                <input type="hidden" name="employee_id" value="<?php echo $row['employee_id']; ?>">
+                                                                <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
+                                                                <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                                                <td><?php echo htmlspecialchars($row['role']); ?></td>
+                                                                <td>
+                                                                    <select name="role" class="form-select" required>
+                                                                        <option value="employee" <?php if ($row['role'] == 'employee') echo 'selected'; ?>>Employee</option>
+                                                                        <option value="manager" <?php if ($row['role'] == 'manager') echo 'selected'; ?>>Manager</option>
+                                                                        <option value="administrator" <?php if ($row['role'] == 'administrator') echo 'selected'; ?>>Administrator</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <button type="submit" name="update_role" class="btn btn-dark btn-sm">Update</button>
+                                                                </td>
+                                                            </form>
+                                                        </tr>
+                                                    <?php endwhile; ?>
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
                                 </div>

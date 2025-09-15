@@ -1,15 +1,56 @@
 <?php
 session_start();
-if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
-    header("Location: login.php");
+
+if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== 'administrator') {
+    header("Location: ../login.php");
     exit;
 }
+
+$host = "localhost";
+$db   = "leave_management";
+$user = "root";
+$pass = "";
+
+$conn = new mysqli($host, $user, $pass, $db);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+$success = "";
+$error   = "";
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_role"])) {
+    $employee_id = intval($_POST["employee_id"]);
+    $role        = trim($_POST["role"]);
+
+    if (!empty($employee_id) && !empty($role)) {
+        $stmt = $conn->prepare("UPDATE employee SET role=? WHERE employee_id=?");
+        $stmt->bind_param("si", $role, $employee_id);
+
+        if ($stmt->execute()) {
+            $success = "Role updated successfully!";
+        } else {
+            $error = "Error updating role: " . $stmt->error;
+        }
+        $stmt->close();
+    } else {
+        $error = "Please select an employee and a role.";
+    }
+}
+
+$employees = $conn->query("
+    SELECT employee_id, first_name, last_name, email, role 
+    FROM employee 
+    ORDER BY first_name ASC
+");
+
+$conn->close();
 ?>
 
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Admin Dashboard</title>
+        <title>Employees</title>
         <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" 
         integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
@@ -185,7 +226,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
             </aside>
             <div class="main">
                 <nav class="navbar navbar-expand px-4 py-3">
-                    <h6>Admin Dashboard</h6>
+                    <h6>Permissions</h6>
                     <div class="navbar-collapse collapse">
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
@@ -215,103 +256,53 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Welcome, <?php echo htmlspecialchars($_SESSION["first_name"]);?>!
+                                Grant User Permissions
                             </h2>
                             <div class="row">
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
-                                        <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
-                                        <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
-                                        <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
                                 <div class="col-12">
-                                    <h3 class="fw-bold fs-4 my-3">leave Requests</h3>
-                                    <table class="table table-striped-columns">
-                                        <thead>
-                                            <tr class="highlight">
-                                            <th scope="col">#</th>
-                                            <th scope="col">First</th>
-                                            <th scope="col">Last</th>
-                                            <th scope="col">Handle</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                            <th scope="row">1</th>
-                                            <td>Mark</td>
-                                            <td>Otto</td>
-                                            <td>@mdo</td>
-                                            </tr>
-                                            <tr>
-                                            <th scope="row">2</th>
-                                            <td>Jacob</td>
-                                            <td>Thornton</td>
-                                            <td>@fat</td>
-                                            </tr>
-                                            <tr>
-                                            <th scope="row">3</th>
-                                            <td>John</td>
-                                            <td>Doe</td>
-                                            <td>@social</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                    <div class="card shadow">
+                                        <div class="card-body py-4">
+                                            <?php if ($success): ?>
+                                                <div class="alert alert-success"><?php echo $success; ?></div>
+                                            <?php endif; ?>
+                                            <?php if ($error): ?>
+                                                <div class="alert alert-danger"><?php echo $error; ?></div>
+                                            <?php endif; ?>
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr class="highlight">
+                                                    <th scope="col">Employee</th>
+                                                    <th scope="col">Email</th>
+                                                    <th scope="col">Current Role</th>
+                                                    <th scope="col">Change Role</th>
+                                                    <th scope="col">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php while ($row = $employees->fetch_assoc()): ?>
+                                                        <tr>
+                                                            <form method="POST">
+                                                                <input type="hidden" name="employee_id" value="<?php echo $row['employee_id']; ?>">
+                                                                <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
+                                                                <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                                                <td><?php echo htmlspecialchars($row['role']); ?></td>
+                                                                <td>
+                                                                    <select name="role" class="form-select" required>
+                                                                        <option value="employee" <?php if ($row['role'] == 'employee') echo 'selected'; ?>>Employee</option>
+                                                                        <option value="manager" <?php if ($row['role'] == 'manager') echo 'selected'; ?>>Manager</option>
+                                                                        <option value="administrator" <?php if ($row['role'] == 'administrator') echo 'selected'; ?>>Administrator</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <button type="submit" name="update_role" class="btn btn-dark btn-sm">Update</button>
+                                                                </td>
+                                                            </form>
+                                                        </tr>
+                                                    <?php endwhile; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -320,6 +311,6 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
             </div>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-        <script src="assets/js/dashboard.js"></script>
+        <script src="../assets/js/dashboard.js"></script>
     </body>
 </html>
