@@ -1,9 +1,7 @@
 <?php
 session_start();
-
-// Redirect if not logged in
-if (!isset($_SESSION["employee_id"])) {
-    header("Location: login.php");
+if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "manager") {
+    header("Location: ../login.php");
     exit;
 }
 
@@ -17,33 +15,92 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$employee_id = $_SESSION["employee_id"];
+function sendNotification($to, $employeeName, $leaveType, $startDate, $endDate, $status) {
+    $subject = "Leave Request Update: " . ucfirst($status);
+    $message = "
+    Hello $employeeName,
+
+    Your leave request for $leaveType from $startDate to $endDate has been $status.
+
+    Regards,
+    Leave Management System
+    ";
+    $headers = "From: no-reply@yourdomain.com\r\n";
+    $headers .= "Reply-To: no-reply@yourdomain.com\r\n";
+    $headers .= "X-Mailer: PHP/" . phpversion();
+
+    mail($to, $subject, $message, $headers);
+}
 
 
-$stmt = $conn->prepare("SELECT employee_id, first_name, last_name, email, department_id, gender, mobile FROM employee WHERE employee_id = ?");
-$stmt->bind_param("i", $employee_id);
-$stmt->execute();
-$stmt->bind_result($employee_id, $first_name, $last_name, $email, $department_id, $gender, $mobile);
-$stmt->fetch();
-$stmt->close();
+$manager_id = $_SESSION["employee_id"];
 
-$dept_name = "N/A";
-$dstmt = $conn->prepare("SELECT department_name FROM department WHERE department_id = ?");
-$dstmt->bind_param("i", $department_id);
-$dstmt->execute();
-$dstmt->bind_result($dept_name);
-$dstmt->fetch();
-$dstmt->close();
+$deptResult = $conn->query("SELECT department_id FROM department WHERE manager_id = $manager_id");
+if ($deptResult->num_rows > 0) {
+    $department_id = $deptResult->fetch_assoc()["department_id"];
+} else {
+    die("No department assigned to this manager.");
+}
 
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["request_id"], $_POST["action"])) {
+    $request_id = intval($_POST["request_id"]);
+    $action     = $_POST["action"] === "approve" ? "approved" : "rejected";
 
+    $stmt = $conn->prepare("
+        UPDATE leave_request l
+        JOIN employee e ON l.employee_id = e.employee_id
+        SET l.status=? 
+        WHERE l.request_id=? AND e.department_id=?
+    ");
+    $stmt->bind_param("sii", $action, $request_id, $department_id);
 
+    if ($stmt->execute() && $stmt->affected_rows > 0) {
+    // Fetch employee email + details for notification
+    $info = $conn->query("
+        SELECT e.email, CONCAT(e.first_name,' ',e.last_name) AS emp_name, lt.type_name, l.start_date, l.end_date
+        FROM leave_request l
+        JOIN employee e ON l.employee_id = e.employee_id
+        JOIN leave_type lt ON l.type_id = lt.type_id
+        WHERE l.request_id = $request_id
+    ")->fetch_assoc();
+
+    if ($info) {
+        sendNotification(
+            $info['email'],
+            $info['emp_name'],
+            $info['type_name'],
+            $info['start_date'],
+            $info['end_date'],
+            $action
+        );
+    }
+
+    $success = "Request #$request_id has been $action and email sent.";
+} else {
+    $error = "Error updating request or not authorized.";
+}
+
+    $stmt->close();
+}
+
+$query = "
+    SELECT l.request_id, e.first_name, e.last_name, lt.type_name, 
+           l.start_date, l.end_date, l.status
+    FROM leave_request l
+    JOIN employee e ON l.employee_id = e.employee_id
+    JOIN leave_type lt ON l.type_id = lt.type_id
+    WHERE l.status = 'pending' AND e.department_id = $department_id
+    ORDER BY l.request_id DESC
+";
+
+$leaves = $conn->query($query);
 $conn->close();
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Manager Dashboard</title>
+    <title>Leave Requests</title>
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" 
     integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
@@ -147,7 +204,7 @@ $conn->close();
             </aside>
             <div class="main">
                 <nav class="navbar navbar-expand px-4 py-3">
-                    <h6>Manager Profile</h6>
+                    <h6>Request</h6>
                     <div class="navbar-collapse collapse">
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
@@ -177,12 +234,42 @@ $conn->close();
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Profile
+                                Pending Leave Requests
                             </h2>
                             <div class="row">
                                 <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr class="highlight">
+                                                        <th scope="col">Employee Name</th>
+                                                        <th scope="col">Leave Type</th>
+                                                        <th scope="col">Start Date</th>
+                                                        <th scope="col">End Date</th>
+                                                        <th scope="col">Status</th>
+                                                        <th scope="col">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php while ($row = $leaves->fetch_assoc()): ?>
+                                                    <tr>
+                                                        <td><?= htmlspecialchars($row['first_name']." ".$row['last_name']) ?></td>
+                                                        <td><?= htmlspecialchars($row['type_name']) ?></td>
+                                                        <td><?= htmlspecialchars($row['start_date']) ?></td>
+                                                        <td><?= htmlspecialchars($row['end_date']) ?></td>
+                                                        <td><span class="badge bg-warning text-dark">Pending</span></td>
+                                                        <td>
+                                                            <form method="POST" class="d-inline">
+                                                                <input type="hidden" name="request_id" value="<?= $row['request_id'] ?>">
+                                                                <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">Approve</button>
+                                                                <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm">Reject</button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                    <?php endwhile; ?>
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
                                 </div>

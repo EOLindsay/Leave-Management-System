@@ -25,8 +25,7 @@ if ($deptResult->num_rows > 0) {
 }
 
 $query = "
-    SELECT l.request_id, e.first_name, e.last_name, lt.type_name, 
-           l.start_date, l.end_date, l.status
+    SELECT l.request_id, e.first_name, e.last_name, lt.type_name, l.start_date, l.end_date, l.status
     FROM leave_request l
     JOIN employee e ON l.employee_id = e.employee_id
     JOIN leave_type lt ON l.type_id = lt.type_id
@@ -36,6 +35,16 @@ $query = "
 if (!empty($_GET['status'])) {
     $status = $conn->real_escape_string($_GET['status']);
     $query .= " AND l.status = '$status'";
+}
+
+if (!empty($_GET['type_id'])) {
+    $type_id = (int) $_GET['type_id'];
+    $query .= " AND l.type_id = $type_id";
+}
+
+if (!empty($_GET['employee_id'])) {
+    $emp_id = (int) $_GET['employee_id'];
+    $query .= " AND l.employee_id = $emp_id";
 }
 
 if (!empty($_GET['start_date']) && !empty($_GET['end_date'])) {
@@ -49,12 +58,7 @@ $leaves = $conn->query($query);
 
 $leave_types = $conn->query("SELECT type_id, type_name FROM leave_type ORDER BY type_name ASC");
 
-$employees = $conn->query("
-    SELECT employee_id, first_name, last_name 
-    FROM employee 
-    WHERE department_id = $department_id
-    ORDER BY first_name ASC
-");
+$employees = $conn->query("SELECT employee_id, first_name, last_name FROM employee WHERE department_id = $department_id ORDER BY first_name ASC");
 
 
 if (isset($_GET['export'])) {
