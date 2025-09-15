@@ -1,15 +1,38 @@
 <?php
 session_start();
 if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
-    header("Location: login.php");
+    header("Location: ../login.php");
     exit;
 }
+
+$host = "localhost";
+$db   = "leave_management";
+$user = "root";
+$pass = "";
+
+$conn = new mysqli($host, $user, $pass, $db);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+$query = "
+    SELECT l.request_id, e.first_name, e.last_name, lt.type_name, 
+           l.start_date, l.end_date, l.status
+    FROM leave_request l
+    JOIN employee e ON l.employee_id = e.employee_id
+    JOIN leave_type lt ON l.type_id = lt.type_id
+    WHERE l.status = 'rejected'
+    ORDER BY l.start_date DESC
+";
+
+$leaves = $conn->query($query);
+$conn->close();
 ?>
 
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Admin Dashboard</title>
+        <title>Leave Requests</title>
         <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" 
         integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
@@ -185,7 +208,7 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
             </aside>
             <div class="main">
                 <nav class="navbar navbar-expand px-4 py-3">
-                    <h6>Admin Dashboard</h6>
+                    <h6>Requests</h6>
                     <div class="navbar-collapse collapse">
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
@@ -215,103 +238,34 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Welcome, <?php echo htmlspecialchars($_SESSION["first_name"]);?>!
+                                Rejected Leave Requests
                             </h2>
                             <div class="row">
                                 <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
+                                    <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr class="highlight">
+                                                    <th scope="col">Employee Name</th>
+                                                    <th scope="col">Leave Type</th>
+                                                    <th scope="col">Start Date</th>
+                                                    <th scope="col">End Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php while ($row = $leaves->fetch_assoc()): ?>
+                                                        <tr>
+                                                            <td><?= htmlspecialchars($row['first_name']." ".$row['last_name']); ?></td>
+                                                            <td><?= htmlspecialchars($row['type_name']); ?></td>
+                                                            <td><?= htmlspecialchars($row['start_date']); ?></td>
+                                                            <td><?= htmlspecialchars($row['end_date']); ?></td>
+                                                        </tr>
+                                                    <?php endwhile; ?>
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
-                                        <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12 col-md-4">
-                                    <div class="card effect shadow">
-                                        <div class="card-body py-4">
-                                            <h5 class="mb-2 fw-bold">
-                                                Member Progress
-                                            </h5>
-                                            <p class="fw-bold mb-2">
-                                                $89,1891
-                                            </p>
-                                            <div class="mb-0">
-                                                <span class="badge text-success me-2">
-                                                    +9.0%
-                                                </span>
-                                                <span class="fw-bold">
-                                                    Since Last Month
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-12">
-                                    <h3 class="fw-bold fs-4 my-3">leave Requests</h3>
-                                    <table class="table table-striped-columns">
-                                        <thead>
-                                            <tr class="highlight">
-                                            <th scope="col">#</th>
-                                            <th scope="col">First</th>
-                                            <th scope="col">Last</th>
-                                            <th scope="col">Handle</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                            <th scope="row">1</th>
-                                            <td>Mark</td>
-                                            <td>Otto</td>
-                                            <td>@mdo</td>
-                                            </tr>
-                                            <tr>
-                                            <th scope="row">2</th>
-                                            <td>Jacob</td>
-                                            <td>Thornton</td>
-                                            <td>@fat</td>
-                                            </tr>
-                                            <tr>
-                                            <th scope="row">3</th>
-                                            <td>John</td>
-                                            <td>Doe</td>
-                                            <td>@social</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -320,6 +274,6 @@ if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "administrator") {
             </div>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-        <script src="assets/js/dashboard.js"></script>
+        <script src="../assets/js/dashboard.js"></script>
     </body>
 </html>
