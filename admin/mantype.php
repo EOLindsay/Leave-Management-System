@@ -255,12 +255,11 @@ $conn->close();
                                 <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <a href="addtype.php" class="btn btn-dark mb-3">Add New Leave Type</a>
                                             <table class="table table-hover">
                                                 <thead>
                                                     <tr class="highlight">
                                                     <th scope="col">ID</th>
-                                                    <th scope="col">Name</th>
+                                                    <th scope="col">Leave Type Name</th>
                                                     <th scope="col">Description</th>
                                                     <th scope="col">Requires Approval</th>
                                                     <th scope="col">Accrual Rate</th>
@@ -286,12 +285,12 @@ $conn->close();
                                                         <?php endwhile; ?>
                                                     <?php else: ?>
                                                         <tr>
-                                                            <td colspan="10" class="text-center">No leave policies found</td>
+                                                            <td colspan="10" class="text-center">No leave types found</td>
                                                         </tr>
                                                     <?php endif; ?>
                                                 </tbody>
                                             </table>
-                                            <a href="addpolicy.php" class="btn btn-dark">Add New Policy</a>
+                                            <a href="addtype.php" class="btn btn-dark">Add New Leave Type</a>
                                         </div>
                                     </div>
                                 </div>

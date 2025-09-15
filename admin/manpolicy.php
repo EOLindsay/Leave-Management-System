@@ -260,13 +260,12 @@ $conn->close();
                                 <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <a href="addtype.php" class="btn btn-dark mb-3">Add New Leave Policy</a>
                                             <table class="table table-hover">
                                                 <thead>
                                                     <tr class="highlight">
                                                     <th scope="col">ID</th>
                                                     <th scope="col">Leave Type</th>
-                                                    <th scope="col">Name</th>
+                                                    <th scope="col">Policy Name</th>
                                                     <th scope="col">Description</th>
                                                     <th scope="col">Accrual Rate</th>
                                                     <th scope="col">Max Days</th>
@@ -300,7 +299,7 @@ $conn->close();
                                                     <?php endif; ?>
                                                 </tbody>
                                             </table>
-                                            <a href="addpolicy.php" class="btn btn-dark">Add New Policy</a>
+                                            <a href="addpolicy.php" class="btn btn-dark">Add New Leave Policy</a>
                                         </div>
                                     </div>
                                 </div>
