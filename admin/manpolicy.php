@@ -260,6 +260,7 @@ $conn->close();
                                 <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
+                                            <a href="addtype.php" class="btn btn-dark mb-3">Add New Leave Policy</a>
                                             <table class="table table-hover">
                                                 <thead>
                                                     <tr class="highlight">
