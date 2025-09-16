@@ -279,7 +279,7 @@ $conn->close();
                                                         <?php while ($row = $policies->fetch_assoc()): ?>
                                                             <tr>
                                                                 <td><?php echo $row['policy_id']; ?></td>
-                                                                <td><?php echo htmlspecialchars($row['first_name']); ?></td>
+                                                                <td><?php echo htmlspecialchars($row['type_name']); ?></td>
                                                                 <td><?php echo htmlspecialchars($row['policy_name']); ?></td>
                                                                 <td><?php echo htmlspecialchars($row['description']); ?></td>
                                                                 <td><?php echo htmlspecialchars($row['accrual_rate']); ?></td>
@@ -287,8 +287,8 @@ $conn->close();
                                                                 <td><?php echo htmlspecialchars($row['noticeperiod_days']); ?></td>
                                                                 <td><?php echo htmlspecialchars($row['gender_specific']); ?></td>
                                                                 <td>
-                                                                    <a href="editpolicy.php?id=<?php echo $row['employee_id']; ?>" class="btn btn-lg"><i class='bx  bx-edit'  style="color: green;"></i> </a>
-                                                                    <a href="manpolicy.php?delete=<?php echo $row['employee_id']; ?>" class="btn btn-lg" onclick="return confirm('Are you sure you want to delete this employee record?');"><i class='bx  bx-trash-x' style="color: red;" ></i> </a>
+                                                                    <a href="editpolicy.php?id=<?php echo $row['policy_id']; ?>" class="btn btn-lg"><i class='bx  bx-edit'  style="color: green;"></i> </a>
+                                                                    <a href="manpolicy.php?delete=<?php echo $row['policy_id']; ?>" class="btn btn-lg" onclick="return confirm('Are you sure you want to delete this employee record?');"><i class='bx  bx-trash-x' style="color: red;" ></i> </a>
                                                                 </td>
                                                             </tr>
                                                         <?php endwhile; ?>

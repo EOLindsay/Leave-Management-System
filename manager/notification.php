@@ -19,7 +19,7 @@ if ($conn->connect_error) {
 $employee_id = $_SESSION["employee_id"];
 
 $stmt = $conn->prepare("
-    SELECT id, message, is_read, created_at 
+    SELECT notification_id, message, is_read, created_at 
     FROM notifications 
     WHERE employee_id = ? OR employee_id IS NULL
     ORDER BY created_at DESC

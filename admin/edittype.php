@@ -271,7 +271,7 @@ $conn->close();
                                 Edit Leave Types
                             </h2>
                             <div class="row">
-                                <div class="col-12">
+                                <div class="col-12 col-md-8">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
                                             <?php if (!empty($success)): ?>

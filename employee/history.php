@@ -259,7 +259,7 @@ $conn->close();
                                                                     <?php endif; ?>
                                                                 </td>
                                                                 <td><?= htmlspecialchars($row['request_date']); ?></td>
-                                                                <td><?= $row['reviewed_on'] ? htmlspecialchars($row['approved_on']) : '-' ?></td>
+                                                                <td><?= $row['approved_on'] ? htmlspecialchars($row['approved_on']) : '-' ?></td>
                                                             </tr>
                                                         <?php endwhile; ?>
                                                     <?php else: ?>

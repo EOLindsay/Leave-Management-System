@@ -37,26 +37,36 @@ if (!$policy) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_policy"])) {
-    $type_id        = $_POST["type_id"];
-    $policy_name    = trim($_POST["policy_name"]);
-    $description    = trim($_POST["description"]);
-    $accrual_rate   = $_POST["accrual_rate"];
-    $maxdays        = $_POST["maxdays_peryear"];
-    $noticeperiod   = $_POST["noticeperiod_days"];
-    $gender_specific= $_POST["gender_specific"];
+    $type_id = isset($_POST["type_id"]) ? intval($_POST["type_id"]) : 0;
+    $policy_name = trim($_POST["policy_name"] ?? '');
+    $description = trim($_POST["description"] ?? '');
+    $accrual_rate = intval($_POST["accrual_rate"] ?? 0);
+    $maxdays = intval($_POST["maxdays_peryear"] ?? 0);
+    $noticeperiod = intval($_POST["noticeperiod_days"] ?? 0);
+    $gender_specific = $_POST["gender_specific"] ?? "All";
 
-    $stmt = $conn->prepare("UPDATE leave_policy SET type_id=?, policy_name=?, description=?, accrual_rate=?, maxdays_peryear=?, noticeperiod_days=?, gender_specific=? WHERE policy_id=?");
-    $stmt->bind_param("issiiisi", $type_id, $policy_name, $description, $accrual_rate, $maxdays, $noticeperiod, $gender_specific, $policy_id);
-
-    if ($stmt->execute()) {
-        $_SESSION["success"] = "Policy updated successfully!";
-        header("Location: manpolicy.php");
-        exit;
+    // Check type_id exists
+    $result = $conn->query("SELECT COUNT(*) AS cnt FROM leave_type WHERE type_id = $type_id");
+    $row = $result->fetch_assoc();
+    if ($row['cnt'] == 0) {
+        $error = "Invalid leave type selected.";
     } else {
-        $error = "Error updating policy: " . $stmt->error;
+        $stmt = $conn->prepare("UPDATE leave_policy 
+            SET type_id=?, policy_name=?, description=?, accrual_rate=?, maxdays_peryear=?, noticeperiod_days=?, gender_specific=? 
+            WHERE policy_id=?");
+        $stmt->bind_param("issiiisi", $type_id, $policy_name, $description, $accrual_rate, $maxdays, $noticeperiod, $gender_specific, $policy_id);
+
+        if ($stmt->execute()) {
+            $_SESSION["success"] = "Policy updated successfully!";
+            header("Location: manpolicy.php");
+            exit;
+        } else {
+            $error = "Error updating policy: " . $stmt->error;
+        }
+        $stmt->close();
     }
-    $stmt->close();
 }
+
 
 $leave_types = $conn->query("SELECT type_id, type_name FROM leave_type ORDER BY type_name ASC");
 
@@ -276,7 +286,7 @@ $conn->close();
                                 Edit Leave Policies
                             </h2>
                             <div class="row">
-                                <div class="col-12">
+                                <div class="col-12 col-md-8">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
                                             <?php if (!empty($success)): ?>
@@ -286,6 +296,14 @@ $conn->close();
                                                 <div class="alert alert-danger"><?php echo $error; ?></div>
                                             <?php endif; ?>
                                             <form method="POST" class="row g-3">
+                                                <select name="type_id" id="type_id" class="form-control" required>
+                                                    <?php while ($type = $leave_types->fetch_assoc()) { ?>
+                                                        <option value="<?php echo $type['type_id']; ?>" 
+                                                                <?php if ($type['type_id'] == $policy['type_id']) echo 'selected'; ?>>
+                                                            <?php echo $type['type_name']; ?>
+                                                        </option>
+                                                    <?php } ?>
+                                                </select>
                                                  <div class="col-md-4">
                                                     <label for="policy_name" class="form-label">Policy Name</label>
                                                     <input type="text" class="form-control" id="policy_name" name="policy_name" value="<?php echo htmlspecialchars($policy['policy_name']); ?>" required>

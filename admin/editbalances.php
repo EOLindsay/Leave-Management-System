@@ -32,7 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_balance"])) {
 
     $stmt = $conn->prepare("UPDATE leave_balance SET current_balance=?, last_accrual_date=?, next_accrual_date=?, total_accrued_since_hire=?, total_taken_since_hire=?, balance_asof_date=? WHERE employee_id=? AND type_id=? AND year=?");
 
-    $stmt->bind_param("dssddssii", $current_balance, $last_accrual, $next_accrual, $total_accrued, $total_taken, $balance_asof, $employee_id, $type_id, $year);
+    $stmt->bind_param("dssddsiii", $current_balance, $last_accrual, $next_accrual, $total_accrued, $total_taken, $balance_asof, $employee_id, $type_id, $year);
 
     if ($stmt->execute()) {
         $success = "Balance updated successfully!";

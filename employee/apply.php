@@ -19,17 +19,44 @@ if ($conn->connect_error) {
 $success = "";
 $error   = "";
 
+$employee_id = $_SESSION['employee_id'];
+
+$empQuery = $conn->prepare("SELECT gender FROM employee WHERE employee_id=?");
+$empQuery->bind_param("i", $employee_id);
+$empQuery->execute();
+$empQuery->bind_result($gender);
+$empQuery->fetch();
+$empQuery->close();
+
+$leave_types_stmt = $conn->prepare("
+    SELECT lt.type_id, lt.type_name FROM leave_type lt JOIN leave_policy lp ON lt.type_id = lp.type_id WHERE lp.gender_specific = 'all' OR lp.gender_specific = ? ORDER BY lt.type_name ASC
+");
+
+$leave_types_stmt->bind_param("s", $gender);
+$leave_types_stmt->execute();
+$leave_types_result = $leave_types_stmt->get_result();
+
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["apply_leave"])) {
-    $employee_id = $_SESSION["employee_id"];
     $type_id     = $_POST["type_id"];
     $start_date  = $_POST["start_date"];
     $end_date    = $_POST["end_date"];
     $reason      = trim($_POST["reason"]);
 
-    if (!empty($type_id) && !empty($start_date) && !empty($end_date)) {
+    // Check if selected leave type is allowed for this employee
+    $check_stmt = $conn->prepare("
+        SELECT COUNT(*) 
+        FROM leave_policy 
+        WHERE type_id = ? AND (gender_specific = 'all' OR gender_specific = ?)
+    ");
+    $check_stmt->bind_param("is", $type_id, $gender);
+    $check_stmt->execute();
+    $check_stmt->bind_result($count);
+    $check_stmt->fetch();
+    $check_stmt->close();
 
+    if ($count > 0) {
         $stmt = $conn->prepare("
-            INSERT INTO leave_request (employee_id, type_id, start_date, end_date, reason, status, applied_on) 
+            INSERT INTO leave_request (employee_id, type_id, start_date, end_date, reason, status, request_date) 
             VALUES (?, ?, ?, ?, ?, 'pending', NOW())
         ");
         $stmt->bind_param("iisss", $employee_id, $type_id, $start_date, $end_date, $reason);
@@ -42,11 +69,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["apply_leave"])) {
 
         $stmt->close();
     } else {
-        $error = "Please fill all required fields!";
+        $error = "This leave type is not available for your gender.";
     }
 }
-
-$leave_types = $conn->query("SELECT type_id, type_name FROM leave_type ORDER BY type_name ASC");
 
 $conn->close();
 ?>
@@ -175,18 +200,12 @@ $conn->close();
                                 <div class="col-12 col-md-8">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <?php if ($success): ?>
-                                                <div class="alert alert-success"><?= $success; ?></div>
-                                            <?php endif; ?>
-                                            <?php if ($error): ?>
-                                                <div class="alert alert-danger"><?= $error; ?></div>
-                                            <?php endif; ?>
                                             <form method="POST" class="row g-3">
                                                 <div class="col-md-6">
                                                     <label for="type_id" class="form-label">Leave Type</label>
                                                     <select id="type_id" name="type_id" class="form-select" required>
                                                         <option value="">-- Select Leave Type --</option>
-                                                        <?php while ($row = $leave_types->fetch_assoc()): ?>
+                                                        <?php while ($row = $leave_types_result->fetch_assoc()): ?>
                                                             <option value="<?= $row['type_id']; ?>">
                                                                 <?= htmlspecialchars($row['type_name']); ?>
                                                             </option>

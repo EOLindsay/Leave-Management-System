@@ -311,7 +311,7 @@ $conn->close();
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label">Mobile</label>
-                                                    <input type="text" class="form-control" name="phone" value="<?= htmlspecialchars($user['phone']); ?>">
+                                                    <input type="text" class="form-control" name="mobile" value="<?= htmlspecialchars($user['mobile']); ?>">
                                                 </div>
                                                 <button type="submit" name="update_contact" class="btn btn-dark">Update Contact</button>
                                             </form>

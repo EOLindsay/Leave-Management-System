@@ -274,7 +274,7 @@ $conn->close();
                                 Add Leave Policy
                             </h2>
                             <div class="row">
-                                <div class="col-12 col-md-7">
+                                <div class="col-12 col-md-8">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
                                             <?php if (!empty($error)): ?>
@@ -308,7 +308,7 @@ $conn->close();
                                                     <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <label for="accrual_rate" class="form-label">Accrual Rate (days/month)</label>
+                                                    <label for="accrual_rate" class="form-label">Accrual Rate (month)</label>
                                                     <input type="number" class="form-control" id="accrual_rate" name="accrual_rate" required>
                                                 </div>
                                                 <div class="col-md-3">

@@ -15,22 +15,22 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-function sendNotification($to, $employeeName, $leaveType, $startDate, $endDate, $status) {
-    $subject = "Leave Request Update: " . ucfirst($status);
-    $message = "
-    Hello $employeeName,
+// function sendNotification($to, $employeeName, $leaveType, $startDate, $endDate, $status) {
+//     $subject = "Leave Request Update: " . ucfirst($status);
+//     $message = "
+//     Hello $employeeName,
 
-    Your leave request for $leaveType from $startDate to $endDate has been $status.
+//     Your leave request for $leaveType from $startDate to $endDate has been $status.
 
-    Regards,
-    Leave Management System
-    ";
-    $headers = "From: no-reply@yourdomain.com\r\n";
-    $headers .= "Reply-To: no-reply@yourdomain.com\r\n";
-    $headers .= "X-Mailer: PHP/" . phpversion();
+//     Regards,
+//     Leave Management System
+//     ";
+//     $headers = "From: no-reply@yourdomain.com\r\n";
+//     $headers .= "Reply-To: no-reply@yourdomain.com\r\n";
+//     $headers .= "X-Mailer: PHP/" . phpversion();
 
-    mail($to, $subject, $message, $headers);
-}
+//     mail($to, $subject, $message, $headers);
+// }
 
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["request_id"], $_POST["action"])) {
@@ -41,26 +41,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["request_id"], $_POST[
     $stmt->bind_param("si", $action, $request_id);
 
     if ($stmt->execute()) {
-    $info = $conn->query("
-        SELECT e.email, CONCAT(e.first_name,' ',e.last_name) AS emp_name, lt.type_name, l.start_date, l.end_date
-        FROM leave_request l
-        JOIN employee e ON l.employee_id = e.employee_id
-        JOIN leave_type lt ON l.type_id = lt.type_id
-        WHERE l.request_id = $request_id
-    ")->fetch_assoc();
+    // $info = $conn->query("
+    //     SELECT e.email, CONCAT(e.first_name,' ',e.last_name) AS emp_name, lt.type_name, l.start_date, l.end_date
+    //     FROM leave_request l
+    //     JOIN employee e ON l.employee_id = e.employee_id
+    //     JOIN leave_type lt ON l.type_id = lt.type_id
+    //     WHERE l.request_id = $request_id
+    // ")->fetch_assoc();
 
-    if ($info) {
-        sendNotification(
-            $info['email'],
-            $info['emp_name'],
-            $info['type_name'],
-            $info['start_date'],
-            $info['end_date'],
-            $action
-        );
-    }
+    // if ($info) {
+    //     sendNotification(
+    //         $info['email'],
+    //         $info['emp_name'],
+    //         $info['type_name'],
+    //         $info['start_date'],
+    //         $info['end_date'],
+    //         $action
+    //     );
+    // }
 
-    $success = "Request #$request_id has been $action and email sent.";
+    $success = "Request #$request_id has been $action.";
 } else {
     $error = "Error updating request.";
 }

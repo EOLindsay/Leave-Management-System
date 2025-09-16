@@ -269,12 +269,6 @@ $conn->close();
                                 <div class="col-12 col-md-7">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <?php if (!empty($error)): ?>
-                                                <div class="alert alert-danger"><?php echo $error; ?></div>
-                                            <?php endif; ?>
-                                            <?php if (isset($_SESSION["success"])): ?>
-                                                <div class="alert alert-success"><?php echo $_SESSION["success"]; unset($_SESSION["success"]); ?></div>
-                                            <?php endif; ?>
                                             <form method="POST" action="" class="row g-3">
                                                 <div class="col-8">
                                                     <label for="department_id" class="form-label">DepartmentID</label>
