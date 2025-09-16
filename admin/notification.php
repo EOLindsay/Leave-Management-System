@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-
 if (!isset($_SESSION["employee_id"])) {
     header("Location: login.php");
     exit;
@@ -17,38 +16,28 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$success = "";
-$error   = "";
+$employee_id = $_SESSION["employee_id"];
 
-if (isset($_GET["delete"])) {
-    $delete_id = intval($_GET["delete"]);
-    $stmt = $conn->prepare("DELETE FROM department WHERE department_id = ?");
-    $stmt->bind_param("i", $delete_id);
+$stmt = $conn->prepare("
+    SELECT id, message, is_read, created_at 
+    FROM notifications 
+    WHERE employee_id = ? OR employee_id IS NULL
+    ORDER BY created_at DESC
+");
+$stmt->bind_param("i", $employee_id);
+$stmt->execute();
+$result = $stmt->get_result();
 
-    if ($stmt->execute()) {
-        $success = "Department deleted successfully!";
-    } else {
-        $error = "Error deleting department: " . $stmt->error;
-    }
-    $stmt->close();
-}
+$conn->query("UPDATE notifications SET is_read = 1 WHERE employee_id = $employee_id");
 
-$query = "
-    SELECT d.department_id, d.department_name, e.first_name, e.last_name 
-    FROM department d
-    LEFT JOIN employee e ON d.manager_id = e.employee_id
-    ORDER BY d.department_name ASC
-";
-$departments = $conn->query($query);
-
+$stmt->close();
 $conn->close();
 ?>
-
 
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Departments</title>
+        <title>Notifications</title>
         <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" 
         integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
@@ -63,7 +52,7 @@ $conn->close();
             <aside id="sidebar">
                 <div class="d-flex justify-content-between p-4">
                     <div class="sidebar-logo">
-                         <a href="../admin.php"><img src="../assets/img/logolight.png" style="width: 166px; height: 50.8px;" alt=" SeamLess Leave"></a> 
+                         <a href="#"><img src="../assets/img/logolight.png" style="width: 166px; height: 50.8px;" alt=" SeamLess Leave"></a> 
                     </div>
                     <button class="toggle-btn border-0" type="button">
                         <i id="icon" class="bx bxs-chevrons-right"></i>
@@ -77,7 +66,7 @@ $conn->close();
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" 
+                        <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
                         data-bs-target="#dept" aria-expanded="false" aria-controls="dept">
                             <i class="bx bx-building"></i>
                             <span>Departments</span>
@@ -224,7 +213,7 @@ $conn->close();
             </aside>
             <div class="main">
                 <nav class="navbar navbar-expand px-4 py-3">
-                    <h6>Departments</h6>
+                    <h6>Notifications</h6>
                     <div class="navbar-collapse collapse">
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
@@ -254,44 +243,29 @@ $conn->close();
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Manage Departments
+                                My Notifications
                             </h2>
                             <div class="row">
-                                <div class="col-md-8">
+                                <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <table class="table table-hover">
-                                                <thead>
-                                                    <tr class="highlight">
-                                                    <th scope="col">ID</th>
-                                                    <th scope="col">Department Name</th>
-                                                    <th scope="col">Manager</th>
-                                                    <th scope="col">Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php if ($departments->num_rows > 0): ?>
-                                                        <?php while ($row = $departments->fetch_assoc()): ?>
-                                                            <tr>
-                                                                <td><?php echo $row['department_id']; ?></td>
-                                                                <td><?php echo htmlspecialchars($row['department_name']); ?></td>
-                                                                <td>
-                                                                    <?php echo $row['first_name'] ? htmlspecialchars($row['first_name'] . " " . $row['last_name']) : "Not Assigned"; ?>
-                                                                </td>
-                                                                <td>
-                                                                    <a href="editdept.php?id=<?php echo $row['department_id']; ?>" class="btn btn-lg"><i class='bx  bx-edit'  style="color: green;"></i> </a>
-                                                                    <a href="mandept.php?delete=<?php echo $row['department_id']; ?>" class="btn btn-lg" onclick="return confirm('Are you sure you want to delete this department?');"><i class='bx  bx-trash-x' style="color: red;" ></i> </a>
-                                                                </td>
-                                                            </tr>
-                                                        <?php endwhile; ?>
-                                                    <?php else: ?>
-                                                        <tr>
-                                                            <td colspan="4" class="text-center">No departments found</td>
-                                                        </tr>
-                                                    <?php endif; ?>
-                                                </tbody>
-                                            </table>
-                                            <a href="adddept.php" class="btn btn-dark">Add New Department</a>
+                                            <?php if ($result->num_rows > 0): ?>
+                                                <ul class="list-group">
+                                                    <?php while ($row = $result->fetch_assoc()): ?>
+                                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                <?= htmlspecialchars($row['message']); ?><br>
+                                                                <small class="text-muted"><?= $row['created_at']; ?></small>
+                                                            </div>
+                                                            <?php if (!$row['is_read']): ?>
+                                                                <span class="badge bg-warning">New</span>
+                                                            <?php endif; ?>
+                                                        </li>
+                                                    <?php endwhile; ?>
+                                                </ul>
+                                            <?php else: ?>
+                                                <p class="text-muted">No notifications found.</p>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </div>

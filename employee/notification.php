@@ -1,7 +1,8 @@
 <?php
 session_start();
-if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "employee") {
-    header("Location: ../login.php");
+
+if (!isset($_SESSION["employee_id"])) {
+    header("Location: login.php");
     exit;
 }
 
@@ -17,33 +18,26 @@ if ($conn->connect_error) {
 
 $employee_id = $_SESSION["employee_id"];
 
-$query = "
-    SELECT lt.type_name, lb.year, lb.current_balance, 
-           lb.total_accrued_since_hire, lb.total_taken_since_hire, 
-           lb.last_accrual_date, lb.next_accrual_date, lb.balance_asof_date
-    FROM leave_balance lb
-    JOIN leave_type lt ON lb.type_id = lt.type_id
-    WHERE lb.employee_id = $employee_id
-    ORDER BY lb.year DESC, lt.type_name
-";
-$balances = $conn->query($query);
+$stmt = $conn->prepare("
+    SELECT id, message, is_read, created_at 
+    FROM notifications 
+    WHERE employee_id = ? OR employee_id IS NULL
+    ORDER BY created_at DESC
+");
+$stmt->bind_param("i", $employee_id);
+$stmt->execute();
+$result = $stmt->get_result();
 
-$total_balance = 0;
-$all_balances  = [];
-if ($balances && $balances->num_rows > 0) {
-    while ($row = $balances->fetch_assoc()) {
-        $total_balance += $row['current_balance'];
-        $all_balances[] = $row; // keep rows for later display
-    }
-}
+$conn->query("UPDATE notifications SET is_read = 1 WHERE employee_id = $employee_id");
 
+$stmt->close();
 $conn->close();
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Leave</title>
+    <title>Notifications</title>
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" 
     integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
@@ -128,7 +122,7 @@ $conn->close();
             </aside>
             <div class="main">
                 <nav class="navbar navbar-expand px-4 py-3">
-                    <h6>Balances</h6>
+                    <h6>Notifications</h6>
                     <div class="navbar-collapse collapse">
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
@@ -158,56 +152,29 @@ $conn->close();
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Leave Balance
+                                My Notifications
                             </h2>
-                            <div class="row mb-4">
-                                <div class="col-md-4">
-                                    <div class="card shadow-sm text-center">
-                                        <div class="card-body">
-                                            <h6 class="fw-bold">Total Available Balance</h6>
-                                            <h3 class="text-success">
-                                                <?= number_format($total_balance, 2); ?> days
-                                            </h3>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                             <div class="row">
                                 <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <table class="table table-hover">
-                                                <thead>
-                                                    <tr class="highlight">
-                                                    <th scope="col">Leave Type</th>
-                                                    <th scope="col">Year</th>
-                                                    <th scope="col">Current Balance</th>
-                                                    <th scope="col">Total Accrued</th>
-                                                    <th scope="col">Total Taken</th>
-                                                    <th scope="col">Last Accrual</th>
-                                                    <th scope="col">Next Accrual</th>
-                                                    <th scope="col">As of Date</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                     <?php if ($balances->num_rows > 0): ?>
-                                                        <?php while ($row = $balances->fetch_assoc()): ?>
-                                                            <tr>
-                                                                <td><?= htmlspecialchars($row['type_name']); ?></td>
-                                                                <td><?= htmlspecialchars($row['year']); ?></td>
-                                                                <td><?= htmlspecialchars($row['current_balance']); ?></td>
-                                                                <td><?= htmlspecialchars($row['total_accrued_since_hire']); ?></td>
-                                                                <td><?= htmlspecialchars($row['total_taken_since_hire']); ?></td>
-                                                                <td><?= htmlspecialchars($row['last_accrual_date']); ?></td>
-                                                                <td><?= htmlspecialchars($row['next_accrual_date']); ?></td>
-                                                                <td><?= htmlspecialchars($row['balance_asof_date']); ?></td>
-                                                            </tr>
-                                                        <?php endwhile; ?>
-                                                    <?php else: ?>
-                                                        <tr><td colspan="8" class="text-center">No balance records found.</td></tr>
-                                                    <?php endif; ?>
-                                                </tbody>
-                                            </table>
+                                            <?php if ($result->num_rows > 0): ?>
+                                                <ul class="list-group">
+                                                    <?php while ($row = $result->fetch_assoc()): ?>
+                                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                <?= htmlspecialchars($row['message']); ?><br>
+                                                                <small class="text-muted"><?= $row['created_at']; ?></small>
+                                                            </div>
+                                                            <?php if (!$row['is_read']): ?>
+                                                                <span class="badge bg-warning">New</span>
+                                                            <?php endif; ?>
+                                                        </li>
+                                                    <?php endwhile; ?>
+                                                </ul>
+                                            <?php else: ?>
+                                                <p class="text-muted">No notifications found.</p>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </div>

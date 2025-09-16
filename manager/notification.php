@@ -1,5 +1,6 @@
 <?php
 session_start();
+
 if (!isset($_SESSION["employee_id"])) {
     header("Location: login.php");
     exit;
@@ -16,76 +17,27 @@ if ($conn->connect_error) {
 }
 
 $employee_id = $_SESSION["employee_id"];
-$success = "";
-$error = "";
 
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_contact"])) {
-    $email = trim($_POST["email"]);
-    $phone = trim($_POST["mobile"]);
-
-    if (!empty($email)) {
-        $stmt = $conn->prepare("UPDATE employee SET email=?, mobile=? WHERE employee_id=?");
-        $stmt->bind_param("ssi", $email, $phone, $employee_id);
-        if ($stmt->execute()) {
-            $success = "Contact details updated successfully.";
-        } else {
-            $error = "Error updating contact details: " . $stmt->error;
-        }
-        $stmt->close();
-    } else {
-        $error = "Email cannot be empty.";
-    }
-}
-
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_password"])) {
-    $current_password = $_POST["current_password"];
-    $new_password     = $_POST["new_password"];
-    $confirm_password = $_POST["confirm_password"];
-
-    if (!empty($current_password) && !empty($new_password) && !empty($confirm_password)) {
-        $stmt = $conn->prepare("SELECT password FROM employee WHERE employee_id=?");
-        $stmt->bind_param("i", $employee_id);
-        $stmt->execute();
-        $stmt->bind_result($hashed_password);
-        $stmt->fetch();
-        $stmt->close();
-
-        if (password_verify($current_password, $hashed_password)) {
-            if ($new_password === $confirm_password) {
-                $new_hashed = password_hash($new_password, PASSWORD_DEFAULT);
-                $update = $conn->prepare("UPDATE employee SET password=? WHERE employee_id=?");
-                $update->bind_param("si", $new_hashed, $employee_id);
-                if ($update->execute()) {
-                    $success = "Password updated successfully.";
-                } else {
-                    $error = "Error updating password: " . $update->error;
-                }
-                $update->close();
-            } else {
-                $error = "New passwords do not match.";
-            }
-        } else {
-            $error = "Current password is incorrect.";
-        }
-    } else {
-        $error = "Please fill in all password fields.";
-    }
-}
-
-$stmt = $conn->prepare("SELECT first_name, last_name, email, mobile, role FROM employee WHERE employee_id=?");
+$stmt = $conn->prepare("
+    SELECT id, message, is_read, created_at 
+    FROM notifications 
+    WHERE employee_id = ? OR employee_id IS NULL
+    ORDER BY created_at DESC
+");
 $stmt->bind_param("i", $employee_id);
 $stmt->execute();
-$user = $stmt->get_result()->fetch_assoc();
-$stmt->close();
+$result = $stmt->get_result();
 
+$conn->query("UPDATE notifications SET is_read = 1 WHERE employee_id = $employee_id");
+
+$stmt->close();
 $conn->close();
 ?>
-
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Settings</title>
+    <title>Notifications</title>
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" 
     integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
@@ -189,7 +141,7 @@ $conn->close();
             </aside>
             <div class="main">
                 <nav class="navbar navbar-expand px-4 py-3">
-                    <h6>Update Contact Details | Change Password</h6>
+                    <h6>Notifications</h6>
                     <div class="navbar-collapse collapse">
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
@@ -219,74 +171,34 @@ $conn->close();
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Settings
+                                My Notifications
                             </h2>
                             <div class="row">
                                 <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <form method="POST">
-                                                <div class="mb-3">
-                                                    <label class="form-label">First Name</label>
-                                                    <input type="text" class="form-control" value="<?= htmlspecialchars($user['first_name']); ?>" disabled>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Last Name</label>
-                                                    <input type="text" class="form-control" value="<?= htmlspecialchars($user['last_name']); ?>" disabled>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Email</label>
-                                                    <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($user['email']); ?>" required>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Mobile</label>
-                                                    <input type="text" class="form-control" name="phone" value="<?= htmlspecialchars($user['phone']); ?>">
-                                                </div>
-                                                <button type="submit" name="update_contact" class="btn btn-dark">Update Contact</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-12">
-                                    <div class="card shadow">
-                                        <div class="card-body py-4">
-                                            <form method="POST">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Current Password</label>
-                                                    <input type="password" class="form-control" name="current_password" required>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">New Password</label>
-                                                    <input type="password" class="form-control" name="new_password" required>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Confirm New Password</label>
-                                                    <input type="password" class="form-control" name="confirm_password" required>
-                                                </div>
-                                                <button type="submit" name="update_password" class="btn btn-dark">Update Password</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-12 col-md-4">
-                                    <div class="card shadow">
-                                        <div class="card-body py-4">
-                                            <strong>Role:</strong> <?= ucfirst($user['role']); ?>
+                                            <?php if ($result->num_rows > 0): ?>
+                                                <ul class="list-group">
+                                                    <?php while ($row = $result->fetch_assoc()): ?>
+                                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                <?= htmlspecialchars($row['message']); ?><br>
+                                                                <small class="text-muted"><?= $row['created_at']; ?></small>
+                                                            </div>
+                                                            <?php if (!$row['is_read']): ?>
+                                                                <span class="badge bg-warning">New</span>
+                                                            <?php endif; ?>
+                                                        </li>
+                                                    <?php endwhile; ?>
+                                                </ul>
+                                            <?php else: ?>
+                                                <p class="text-muted">No notifications found.</p>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                            <?php if ($success): ?>
-                                <div class="alert alert-success"><?= $success; ?></div>
-                            <?php endif; ?>
-                            <?php if ($error): ?>
-                                <div class="alert alert-danger"><?= $error; ?></div>
-                            <?php endif; ?>
                     </div>
                 </main>
             </div>

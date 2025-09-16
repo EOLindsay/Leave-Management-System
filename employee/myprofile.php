@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// Redirect if not logged in
 if (!isset($_SESSION["employee_id"])) {
     header("Location: login.php");
     exit;
@@ -18,23 +17,6 @@ if ($conn->connect_error) {
 }
 
 $employee_id = $_SESSION["employee_id"];
-
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update"])) {
-    $email  = $_POST["email"]  ?? null;
-    $mobile = $_POST["mobile"] ?? null;
-
-    $update = $conn->prepare("UPDATE employee SET email = ?, mobile = ? WHERE employee_id = ?");
-    $update->bind_param("ssi", $email, $mobile, $employee_id);
-
-    if ($update->execute()) {
-        $success = "Profile updated successfully";
-    } else {
-        $error = "Error updating profile: " . $update->error;
-    }
-
-    $update->close();
-}
-
 
 $stmt = $conn->prepare("SELECT employee_id, first_name, last_name, email, department_id, gender, mobile FROM employee WHERE employee_id = ?");
 $stmt->bind_param("i", $employee_id);
@@ -123,7 +105,7 @@ $conn->close();
                          </a>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link">
+                        <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notification</span>
                         </a>
@@ -152,7 +134,7 @@ $conn->close();
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="#" class="dropdown-item">
+                                    <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
                                     </a>
@@ -161,7 +143,7 @@ $conn->close();
                                         <span>Settings</span>
                                     </a>
                                     <div class="dropdown-divider"></div>
-                                    <a href="#" class="dropdown-item">
+                                    <a href="help.php" class="dropdown-item">
                                         <i class="bx bx-help-circle"></i>
                                         <span>Help center</span>
                                     </a>
@@ -180,13 +162,7 @@ $conn->close();
                                 <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <?php if (!empty($success)): ?>
-                                                <div class="alert alert-success"><?php echo $success; ?></div>
-                                            <?php endif; ?>
-                                            <?php if (!empty($error)): ?>
-                                                <div class="alert alert-danger"><?php echo $error; ?></div>
-                                            <?php endif; ?>
-                                           <form method="POST" class="row g-3">
+                                           <form class="row g-3">
                                                 <div class="col-md-6">
                                                     <label for="first_name" class="form-label">First Name</label>
                                                     <input type="text" class="form-control" id="first_name" name="first_name" value="<?php echo htmlspecialchars($first_name); ?>" readonly required>
@@ -197,11 +173,11 @@ $conn->close();
                                                 </div>
                                                 <div class="col-md-5">
                                                     <label for="email" class="form-label">Email</label>
-                                                    <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>" required>
+                                                    <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>"readonly required>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <label for="mobile" class="form-label">Mobile Number</label>
-                                                    <input type="tel" class="form-control" id="mobile" name="mobile" value="<?php echo htmlspecialchars($mobile); ?>" required >
+                                                    <input type="tel" class="form-control" id="mobile" name="mobile" value="<?php echo htmlspecialchars($mobile); ?>"readonly required >
                                                 </div>
                                                 <div class="col-md-4">
                                                     <label for="Gender" class="form-label">Gender</label>
@@ -216,9 +192,6 @@ $conn->close();
                                                 <div class="col-md-2">
                                                     <label for="employee_id" class="form-label">Employee Id</label>
                                                     <input type="text" class="form-control" id="employee_id" value="<?php echo htmlspecialchars($employee_id); ?>" required readonly>
-                                                </div>
-                                                <div class="col-12">
-                                                    <button type="submit" name="update" class="btn btn-dark">Update</button>
                                                 </div>
                                             </form>
                                         </div>

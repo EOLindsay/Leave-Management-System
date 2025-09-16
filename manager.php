@@ -154,7 +154,7 @@ $conn->close();
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link">
+                        <a href="manager/notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notifications</span>
                         </a>
@@ -183,7 +183,7 @@ $conn->close();
                                    <img src="assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="#" class="dropdown-item">
+                                    <a href="manager/notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
                                     </a>
@@ -192,7 +192,7 @@ $conn->close();
                                         <span>Settings</span>
                                     </a>
                                     <div class="dropdown-divider"></div>
-                                    <a href="#" class="dropdown-item">
+                                    <a href="manager/help.php" class="dropdown-item">
                                         <i class="bx bx-help-circle"></i>
                                         <span>Help center</span>
                                     </a>

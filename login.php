@@ -148,6 +148,9 @@ $conn->close();
                         </button>
                     </div>
                 </form>
+                <div class="text-center">
+                    <a href="forgotten.php" class="text-decoration-none">Forgot Password?</a>
+                </div>
             </div>
         </div>
     </div>

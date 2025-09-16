@@ -196,7 +196,7 @@ $recent_leaves = $conn->query("
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link">
+                        <a href="admin/notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notifications</span>
                         </a>
@@ -225,7 +225,7 @@ $recent_leaves = $conn->query("
                                    <img src="assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="#" class="dropdown-item">
+                                    <a href="admin/notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
                                     </a>
@@ -234,7 +234,7 @@ $recent_leaves = $conn->query("
                                         <span>Settings</span>
                                     </a>
                                     <div class="dropdown-divider"></div>
-                                    <a href="#" class="dropdown-item">
+                                    <a href="admin/help.php" class="dropdown-item">
                                         <i class="bx bx-help-circle"></i>
                                         <span>Help center</span>
                                     </a>
