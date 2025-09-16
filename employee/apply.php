@@ -1,9 +1,8 @@
 <?php
 session_start();
 
-// Redirect if not logged in
-if (!isset($_SESSION["employee_id"])) {
-    header("Location: login.php");
+if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "employee") {
+    header("Location: ../login.php");
     exit;
 }
 
@@ -17,25 +16,37 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$employee_id = $_SESSION["employee_id"];
+$success = "";
+$error   = "";
 
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["apply_leave"])) {
+    $employee_id = $_SESSION["employee_id"];
+    $type_id     = $_POST["type_id"];
+    $start_date  = $_POST["start_date"];
+    $end_date    = $_POST["end_date"];
+    $reason      = trim($_POST["reason"]);
 
-$stmt = $conn->prepare("SELECT employee_id, first_name, last_name, email, department_id, gender, mobile FROM employee WHERE employee_id = ?");
-$stmt->bind_param("i", $employee_id);
-$stmt->execute();
-$stmt->bind_result($employee_id, $first_name, $last_name, $email, $department_id, $gender, $mobile);
-$stmt->fetch();
-$stmt->close();
+    if (!empty($type_id) && !empty($start_date) && !empty($end_date)) {
 
-$dept_name = "N/A";
-$dstmt = $conn->prepare("SELECT department_name FROM department WHERE department_id = ?");
-$dstmt->bind_param("i", $department_id);
-$dstmt->execute();
-$dstmt->bind_result($dept_name);
-$dstmt->fetch();
-$dstmt->close();
+        $stmt = $conn->prepare("
+            INSERT INTO leave_request (employee_id, type_id, start_date, end_date, reason, status, applied_on) 
+            VALUES (?, ?, ?, ?, ?, 'pending', NOW())
+        ");
+        $stmt->bind_param("iisss", $employee_id, $type_id, $start_date, $end_date, $reason);
 
+        if ($stmt->execute()) {
+            $success = "Leave application submitted successfully!";
+        } else {
+            $error = "Error: " . $stmt->error;
+        }
 
+        $stmt->close();
+    } else {
+        $error = "Please fill all required fields!";
+    }
+}
+
+$leave_types = $conn->query("SELECT type_id, type_name FROM leave_type ORDER BY type_name ASC");
 
 $conn->close();
 ?>
@@ -43,7 +54,7 @@ $conn->close();
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Profile</title>
+    <title>Leave</title>
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" 
     integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
@@ -128,7 +139,7 @@ $conn->close();
             </aside>
             <div class="main">
                 <nav class="navbar navbar-expand px-4 py-3">
-                    <h6>Employee Profile</h6>
+                    <h6>My Leave</h6>
                     <div class="navbar-collapse collapse">
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
@@ -158,12 +169,46 @@ $conn->close();
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Profile
+                                Leave Application
                             </h2>
                             <div class="row">
-                                <div class="col-12">
+                                <div class="col-12 col-md-8">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
+                                            <?php if ($success): ?>
+                                                <div class="alert alert-success"><?= $success; ?></div>
+                                            <?php endif; ?>
+                                            <?php if ($error): ?>
+                                                <div class="alert alert-danger"><?= $error; ?></div>
+                                            <?php endif; ?>
+                                            <form method="POST" class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="type_id" class="form-label">Leave Type</label>
+                                                    <select id="type_id" name="type_id" class="form-select" required>
+                                                        <option value="">-- Select Leave Type --</option>
+                                                        <?php while ($row = $leave_types->fetch_assoc()): ?>
+                                                            <option value="<?= $row['type_id']; ?>">
+                                                                <?= htmlspecialchars($row['type_name']); ?>
+                                                            </option>
+                                                        <?php endwhile; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="start_date" class="form-label">Start Date</label>
+                                                    <input type="date" id="start_date" name="start_date" class="form-control" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="end_date" class="form-label">End Date</label>
+                                                    <input type="date" id="end_date" name="end_date" class="form-control" required>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label for="reason" class="form-label">Reason</label>
+                                                    <textarea id="reason" name="reason" class="form-control" rows="3" placeholder="Explain your reason"></textarea>
+                                                </div>
+                                                <div class="col-12">
+                                                    <button type="submit" name="apply_leave" class="btn btn-dark">Submit Application</button>
+                                                </div>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
