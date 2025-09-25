@@ -120,6 +120,36 @@ $conn->close();
                     </li>
                     <li class="sidebar-item">
                         <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
+                        data-bs-target="#leave" aria-expanded="false" aria-controls="leave">
+                            <i class="bx bx-pencil-square"></i>
+                            <span>My Leave</span>
+                        </a>
+                        <ul id="leave" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                            <li class="sidebar-item">
+                                <a href="apply.php" class="sidebar-link">
+                                    Apply For Leave
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a href="balance.php" class="sidebar-link">
+                                    Leave Balance
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a href="status.php" class="sidebar-link">
+                                    Leave Status
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="history.php" class="sidebar-link">
+                            <i class="bx  bx-history"></i> 
+                            <span>Leave History</span>
+                         </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
                         data-bs-target="#emp" aria-expanded="false" aria-controls="emp">
                             <i class="bx bx-people-diversity"></i>
                             <span>Employees</span>
@@ -167,12 +197,12 @@ $conn->close();
                             <span>Leave Report</span>
                         </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notifications</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -197,10 +227,10 @@ $conn->close();
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="notification.php" class="dropdown-item">
+                                    <!-- <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -222,7 +252,22 @@ $conn->close();
                                 Settings
                             </h2>
                             <div class="row">
-                                <div class="col-12">
+                                <div class="col-12 col-md-4">
+                                    <div class="card shadow">
+                                        <div class="card-body py-4">
+                                            <strong>Role:</strong> <?= ucfirst($user['role']); ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php if ($success): ?>
+                                <div class="alert alert-success"><?= $success; ?></div>
+                            <?php endif; ?>
+                            <?php if ($error): ?>
+                                <div class="alert alert-danger"><?= $error; ?></div>
+                            <?php endif; ?>
+                            <div class="row">
+                                <div class="col-12 col-md-8">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
                                             <form method="POST">
@@ -249,7 +294,7 @@ $conn->close();
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-12">
+                                <div class="col-12 col-md-8">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
                                             <form method="POST">
@@ -271,22 +316,7 @@ $conn->close();
                                     </div>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-12 col-md-4">
-                                    <div class="card shadow">
-                                        <div class="card-body py-4">
-                                            <strong>Role:</strong> <?= ucfirst($user['role']); ?>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
-                            <?php if ($success): ?>
-                                <div class="alert alert-success"><?= $success; ?></div>
-                            <?php endif; ?>
-                            <?php if ($error): ?>
-                                <div class="alert alert-danger"><?= $error; ?></div>
-                            <?php endif; ?>
                     </div>
                 </main>
             </div>

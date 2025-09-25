@@ -16,47 +16,52 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$success = "";
-$error   = "";
-
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_balance"])) {
-    $employee_id     = intval($_POST["employee_id"]);
-    $type_id         = intval($_POST["type_id"]);
-    $year            = intval($_POST["year"]);
-    $current_balance = floatval($_POST["current_balance"]);
-    $last_accrual    = $_POST["last_accrual_date"];
-    $next_accrual    = $_POST["next_accrual_date"];
-    $total_accrued   = floatval($_POST["total_accrued_since_hire"]);
-    $total_taken     = floatval($_POST["total_taken_since_hire"]);
-    $balance_asof    = $_POST["balance_asof_date"];
-
-    $stmt = $conn->prepare("UPDATE leave_balance SET current_balance=?, last_accrual_date=?, next_accrual_date=?, total_accrued_since_hire=?, total_taken_since_hire=?, balance_asof_date=? WHERE employee_id=? AND type_id=? AND year=?");
-
-    $stmt->bind_param("dssddsiii", $current_balance, $last_accrual, $next_accrual, $total_accrued, $total_taken, $balance_asof, $employee_id, $type_id, $year);
-
-    if ($stmt->execute()) {
-        $success = "Balance updated successfully!";
-    } else {
-        $error = "Error updating balance: " . $stmt->error;
-    }
-    $stmt->close();
-}
-
 
 $query = "
-        SELECT lb.employee_id, e.first_name, e.last_name, 
-             lt.type_name, lb.year, lb.current_balance, lb.last_accrual_date, 
-             lb.next_accrual_date, lb.total_accrued_since_hire, 
-             lb.total_taken_since_hire, lb.balance_asof_date
-          FROM leave_balance lb
-          JOIN employee e ON lb.employee_id = e.employee_id
-          JOIN leave_type lt ON lb.type_id = lt.type_id
-          ORDER BY e.first_name, lt.type_name";
+    SELECT e.employee_id,
+           CONCAT(e.first_name, ' ', e.last_name) AS employee_name,
+
+           -- Accrued leave: sum of applicable policies only
+           (
+              SELECT COALESCE(SUM(p.maxdays_peryear), 0)
+              FROM leave_policy p
+              WHERE p.gender_specific = 'all'
+                 OR p.gender_specific = e.gender
+           ) AS total_accrued_since_hire,
+
+           -- Taken leave: sum of approved requests only
+           (
+              SELECT COALESCE(SUM(DATEDIFF(lr.end_date, lr.start_date) + 1), 0)
+              FROM leave_request lr
+              WHERE lr.employee_id = e.employee_id
+                AND lr.status = 'approved'
+           ) AS total_taken_since_hire,
+
+           -- Balance = accrued - taken
+           (
+              (SELECT COALESCE(SUM(p.maxdays_peryear), 0)
+               FROM leave_policy p
+               WHERE p.gender_specific = 'all'
+                  OR p.gender_specific = e.gender)
+              -
+              (SELECT COALESCE(SUM(DATEDIFF(lr.end_date, lr.start_date) + 1), 0)
+               FROM leave_request lr
+               WHERE lr.employee_id = e.employee_id
+                 AND lr.status = 'approved')
+           ) AS current_balance
+
+    FROM employee e
+    ORDER BY e.first_name
+";
+
+
+
 
 $balances = $conn->query($query);
-
 $conn->close();
 ?>
+
+
 
 <!DOCTYPE html>
 <html>
@@ -150,7 +155,7 @@ $conn->close();
                                 </a>
                                 <ul id="balance" class="sidebar-dropdown list-unstyled collapse">
                                     <li class="sidebar-item">
-                                        <a href="editbalances.php" class="sidebar-link">Edit Leave Balance</a>
+                                        <a href="editbalances.php" class="sidebar-link">View Leave Balance</a>
                                     </li>
                                 </ul>
                             </li>
@@ -215,12 +220,12 @@ $conn->close();
                             <span>Leave Report</span>
                         </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notifications</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -245,10 +250,10 @@ $conn->close();
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="notification.php" class="dropdown-item">
+                                    <!-- <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -267,55 +272,38 @@ $conn->close();
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Edit Leave Balances
+                                View Leave Balances
                             </h2>
                             <div class="row">
                                 <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <?php if ($success): ?>
-                                                <div class="alert alert-success"><?php echo $success; ?></div>
-                                            <?php endif; ?>
-                                            <?php if ($error): ?>
-                                                <div class="alert alert-danger"><?php echo $error; ?></div>
-                                            <?php endif; ?>
                                             <table class="table table-hover">
                                                 <thead>
                                                     <tr class="highlight">
                                                     <th scope="col">Employee</th>
-                                                    <th scope="col">Leave Type</th>
-                                                    <th scope="col">Year</th>
+                                                    <th scope="col">Total Balance</th>
+                                                    <th scope="col">Total Used</th>
                                                     <th scope="col">Current Balance</th>
-                                                    <th scope="col">Last Accrual</th>
-                                                    <th scope="col">Next Accrual</th>
-                                                    <th scope="col">Total Accrued</th>
-                                                    <th scope="col">Total Taken</th>
-                                                    <th scope="col">Balance As of</th>
-                                                    <th scope="col">Actions</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <?php while ($row = $balances->fetch_assoc()): ?>
-                                                        <tr>
-                                                            <form method="POST">
-                                                                <input type="hidden" name="employee_id" value="<?php echo $row['employee_id']; ?>">
-                                                                <input type="hidden" name="type_id" value="<?php echo $row['type_id']; ?>">
-                                                                <input type="hidden" name="year" value="<?php echo $row['year']; ?>">
-                                                                <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
-                                                                <td><?php echo htmlspecialchars($row['type_name']); ?></td>
-                                                                <td><?php echo htmlspecialchars($row['year']); ?></td>
-                                                                <td><input type="number" step="0.01" class="form-control" name="current_balance" value="<?php echo $row['current_balance']; ?>"></td>
-                                                                <td><input type="date" class="form-control" name="last_accrual_date" value="<?php echo $row['last_accrual_date']; ?>"></td>
-                                                                <td><input type="date" class="form-control" name="next_accrual_date" value="<?php echo $row['next_accrual_date']; ?>"></td>
-                                                                <td><input type="number" step="0.01" class="form-control" name="total_accrued_since_hire" value="<?php echo $row['total_accrued_since_hire']; ?>"></td>
-                                                                <td><input type="number" step="0.01" class="form-control" name="total_taken_since_hire" value="<?php echo $row['total_taken_since_hire']; ?>"></td>
-                                                                <td><input type="date" class="form-control" name="balance_asof_date" value="<?php echo $row['balance_asof_date']; ?>"></td>
-                                                                <td>
-                                                                    <button type="submit" name="update_balance" class="btn btn-lg"><i class='bx  bx-save'  style="color: blue;"></i> </button>
+                                                    <?php if ($balances && $balances->num_rows > 0): ?>
+                                                        <?php while ($row = $balances->fetch_assoc()): ?>
+                                                            <tr>
+                                                                <td><?= htmlspecialchars($row['employee_name']); ?></td>
+                                                                <td><?= htmlspecialchars($row['total_accrued_since_hire']); ?></td>
+                                                                <td><?= htmlspecialchars($row['total_taken_since_hire']); ?></td>
+                                                                <td class="<?= ($row['current_balance'] <= 0 ? 'text-danger fw-bold' : 'text-success fw-bold'); ?>">
+                                                                    <?= htmlspecialchars($row['current_balance']); ?>
                                                                 </td>
-                                                            </form>
+                                                            </tr>
+                                                        <?php endwhile; ?>
+                                                    <?php else: ?>
+                                                        <tr>
+                                                            <td colspan="4" class="text-center">No leave balance data available.</td>
                                                         </tr>
-                                                    <?php endwhile; ?>
+                                                    <?php endif; ?>
                                                 </tbody>
                                             </table>
                                         </div>

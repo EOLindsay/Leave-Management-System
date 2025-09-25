@@ -1,6 +1,6 @@
 <?php
 session_start();
-if (!isset($_SESSION["employee_id"]) || $_SESSION["role"] !== "employee") {
+if (!isset($_SESSION["employee_id"])) {
     header("Location: ../login.php");
     exit;
 }
@@ -60,7 +60,6 @@ $leave_types = $conn->query("SELECT type_id, type_name FROM leave_type ORDER BY 
 $conn->close();
 ?>
 
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -79,14 +78,14 @@ $conn->close();
             <aside id="sidebar">
                 <div class="d-flex justify-content-between p-4">
                     <div class="sidebar-logo">
-                    <a href="../employee.php"><img src="../assets/img/logolight.png" style="width: 166px; height: 50.8px;" alt=" SeamLess Leave"></a>                    </div>
+                    <a href="../manager.php"><img src="../assets/img/logolight.png" style="width: 166px; height: 50.8px;" alt=" SeamLess Leave"></a>                    </div>
                     <button class="toggle-btn border-0" type="button">
                         <i id="icon" class="bx bxs-chevrons-right"></i>
                     </button>
                 </div>
                 <ul class="sidebar-nav">
                     <li class="sidebar-item">
-                        <a href="../employee.php" class="sidebar-link">
+                        <a href="../manager.php" class="sidebar-link">
                             <i class="bx bx-dashboard"></i>
                             <span>Dashboard</span>
                         </a>
@@ -127,10 +126,59 @@ $conn->close();
                             <span>Leave History</span>
                          </a>
                     </li>
+                    <li class="sidebar-item">
+                        <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
+                        data-bs-target="#emp" aria-expanded="false" aria-controls="emp">
+                            <i class="bx bx-people-diversity"></i>
+                            <span>Employees</span>
+                        </a>
+                        <ul id="emp" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                            <li class="sidebar-item">
+                                <a href="grantp.php" class="sidebar-link">
+                                    Employee Permissions
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
+                        data-bs-target="#manage" aria-expanded="false" aria-controls="manage">
+                            <i class="bx bx-server"></i>
+                            <span>Leave Management</span>
+                        </a>
+                        <ul id="manage" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                            <li class="sidebar-item">
+                                <a href="all.php" class="sidebar-link">
+                                    All Leaves
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a href="pending.php" class="sidebar-link">
+                                    Pending Leaves
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a href="approved.php" class="sidebar-link">
+                                    Approved Leaves
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a href="rejected.php" class="sidebar-link">
+                                    Rejected Leaves
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="report.php" class="sidebar-link">
+                            <i class="bx bx-file-detail"></i>
+                            <span>Leave Report</span>
+                        </a>
+                    </li>
                     <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
-                            <span>Notification</span>
+                            <span>Notifications</span>
                         </a>
                     </li> -->
                     <li class="sidebar-item">
@@ -278,6 +326,5 @@ $conn->close();
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
         <script src="../assets/js/dashboard.js"></script>
-    </body>
 </body>
 </html>

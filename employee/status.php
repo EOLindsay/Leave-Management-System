@@ -21,7 +21,7 @@ $employee_id = $_SESSION["employee_id"];
 $query = "
     SELECT l.request_id, lt.type_name, l.start_date, l.end_date, l.reason, l.status, l.request_date
     FROM leave_request l
-    JOIN leave_type lt ON l.type_id = lt.type_id
+    LEFT JOIN leave_type lt ON l.type_id = lt.type_id
     WHERE l.employee_id = $employee_id
 ";
 
@@ -119,12 +119,12 @@ $conn->close();
                             <span>Leave History</span>
                          </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notification</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -149,10 +149,10 @@ $conn->close();
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="notification.php" class="dropdown-item">
+                                    <!-- <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -222,7 +222,7 @@ $conn->close();
                                                     <?php if ($leaves->num_rows > 0): ?>
                                                         <?php while ($row = $leaves->fetch_assoc()): ?>
                                                             <tr>
-                                                                <td><?= htmlspecialchars($row['type_name']); ?></td>
+                                                                <td><?= $row['type_name'] ? htmlspecialchars($row['type_name']) : 'N/A'; ?></td>
                                                                 <td><?= htmlspecialchars($row['start_date']); ?></td>
                                                                 <td><?= htmlspecialchars($row['end_date']); ?></td>
                                                                 <td><?= htmlspecialchars($row['reason']); ?></td>

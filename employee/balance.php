@@ -17,25 +17,88 @@ if ($conn->connect_error) {
 
 $employee_id = $_SESSION["employee_id"];
 
+$genderResult = $conn->query("SELECT gender FROM employee WHERE employee_id = $employee_id");
+$genderRow = $genderResult->fetch_assoc();
+$gender = $genderRow['gender'];
+
+$totalQuery = $conn->query("
+    SELECT COALESCE(SUM(p.maxdays_peryear), 0) AS total_policy_days
+    FROM leave_policy p
+    WHERE p.gender_specific = 'all' OR p.gender_specific = '$gender'
+");
+$totalPolicyRow = $totalQuery->fetch_assoc();
+$totalPolicyDays = $totalPolicyRow['total_policy_days'];
+
+$takenQuery = $conn->query("
+    SELECT COALESCE(SUM(DATEDIFF(lr.end_date, lr.start_date) + 1), 0) AS total_taken
+    FROM leave_request lr
+    WHERE lr.employee_id = $employee_id AND lr.status = 'approved'
+");
+$takenRow = $takenQuery->fetch_assoc();
+$totalTaken = $takenRow['total_taken'];
+
+$total_balance = $totalPolicyDays - $totalTaken;
+
+$annualQuery = $conn->query("
+    SELECT (p.maxdays_peryear - 
+        COALESCE((
+            SELECT SUM(DATEDIFF(lr.end_date, lr.start_date) + 1)
+            FROM leave_request lr
+            JOIN leave_type lt ON lr.type_id = lt.type_id
+            WHERE lr.employee_id = $employee_id 
+              AND lr.status = 'approved'
+              AND lt.type_name = 'Annual Leave'
+        ), 0)
+    ) AS annual_left
+    FROM leave_policy p
+    JOIN leave_type lt ON p.type_id = lt.type_id
+    WHERE lt.type_name = 'Annual Leave'
+      AND (p.gender_specific = 'all' OR p.gender_specific = '$gender')
+    LIMIT 1
+");
+$annualRow = $annualQuery->fetch_assoc();
+$annual_leave = $annualRow['annual_left'] ?? 0;
+
+$sickQuery = $conn->query("
+    SELECT (p.maxdays_peryear - 
+        COALESCE((
+            SELECT SUM(DATEDIFF(lr.end_date, lr.start_date) + 1)
+            FROM leave_request lr
+            JOIN leave_type lt ON lr.type_id = lt.type_id
+            WHERE lr.employee_id = $employee_id 
+              AND lr.status = 'approved'
+              AND lt.type_name = 'Sick Leave'
+        ), 0)
+    ) AS sick_left
+    FROM leave_policy p
+    JOIN leave_type lt ON p.type_id = lt.type_id
+    WHERE lt.type_name = 'Sick Leave'
+      AND (p.gender_specific = 'all' OR p.gender_specific = '$gender')
+    LIMIT 1
+");
+$sickRow = $sickQuery->fetch_assoc();
+$sick_leave = $sickRow['sick_left'] ?? 0;
+
 $query = "
-    SELECT lt.type_name, lb.year, lb.current_balance, 
-           lb.total_accrued_since_hire, lb.total_taken_since_hire, 
-           lb.last_accrual_date, lb.next_accrual_date, lb.balance_asof_date
-    FROM leave_balance lb
-    JOIN leave_type lt ON lb.type_id = lt.type_id
-    WHERE lb.employee_id = $employee_id
-    ORDER BY lb.year DESC, lt.type_name
+    SELECT lt.type_name,
+           p.maxdays_peryear AS total_accrued_since_hire,
+           COALESCE(SUM(CASE WHEN lr.status = 'approved' 
+                             THEN DATEDIFF(lr.end_date, lr.start_date) + 1
+                             ELSE 0 END), 0) AS total_taken_since_hire,
+           (p.maxdays_peryear - 
+            COALESCE(SUM(CASE WHEN lr.status = 'approved' 
+                              THEN DATEDIFF(lr.end_date, lr.start_date) + 1
+                              ELSE 0 END), 0)) AS current_balance
+    FROM leave_policy p
+    JOIN leave_type lt ON p.type_id = lt.type_id
+    LEFT JOIN leave_request lr 
+           ON lr.type_id = lt.type_id AND lr.employee_id = $employee_id
+    WHERE p.gender_specific = 'all' OR p.gender_specific = '$gender'
+    GROUP BY lt.type_name, p.maxdays_peryear
+    ORDER BY lt.type_name
 ";
 $balances = $conn->query($query);
 
-$total_balance = 0;
-$all_balances  = [];
-if ($balances && $balances->num_rows > 0) {
-    while ($row = $balances->fetch_assoc()) {
-        $total_balance += $row['current_balance'];
-        $all_balances[] = $row; // keep rows for later display
-    }
-}
 
 $conn->close();
 ?>
@@ -106,12 +169,12 @@ $conn->close();
                             <span>Leave History</span>
                          </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notification</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -136,10 +199,10 @@ $conn->close();
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="notification.php" class="dropdown-item">
+                                    <!-- <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -166,7 +229,27 @@ $conn->close();
                                         <div class="card-body">
                                             <h6 class="fw-bold">Total Available Balance</h6>
                                             <h3 class="text-success">
-                                                <?= number_format($total_balance, 2); ?> days
+                                                <?= number_format($total_balance, 0); ?> days
+                                            </h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                 <div class="col-md-4">
+                                    <div class="card shadow-sm text-center">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold">Annual Leave</h6>
+                                            <h3 class="text-primary">
+                                                <?= number_format($annual_leave, 0); ?> days
+                                            </h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card shadow-sm text-center">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold">Sick Leave</h6>
+                                            <h3 class="text-danger">
+                                                <?= number_format($sick_leave, 0); ?> days
                                             </h3>
                                         </div>
                                     </div>
@@ -180,27 +263,19 @@ $conn->close();
                                                 <thead>
                                                     <tr class="highlight">
                                                     <th scope="col">Leave Type</th>
-                                                    <th scope="col">Year</th>
                                                     <th scope="col">Current Balance</th>
-                                                    <th scope="col">Total Accrued</th>
+                                                    <th scope="col">Total Balance</th>
                                                     <th scope="col">Total Taken</th>
-                                                    <th scope="col">Last Accrual</th>
-                                                    <th scope="col">Next Accrual</th>
-                                                    <th scope="col">As of Date</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                      <?php if ($balances->num_rows > 0): ?>
                                                         <?php while ($row = $balances->fetch_assoc()): ?>
                                                             <tr>
-                                                                <td><?= htmlspecialchars($row['type_name']); ?></td>
-                                                                <td><?= htmlspecialchars($row['year']); ?></td>
+                                                                <td><?= $row['type_name'] ? htmlspecialchars($row['type_name']) : 'N/A'; ?></td>
                                                                 <td><?= htmlspecialchars($row['current_balance']); ?></td>
                                                                 <td><?= htmlspecialchars($row['total_accrued_since_hire']); ?></td>
                                                                 <td><?= htmlspecialchars($row['total_taken_since_hire']); ?></td>
-                                                                <td><?= htmlspecialchars($row['last_accrual_date']); ?></td>
-                                                                <td><?= htmlspecialchars($row['next_accrual_date']); ?></td>
-                                                                <td><?= htmlspecialchars($row['balance_asof_date']); ?></td>
                                                             </tr>
                                                         <?php endwhile; ?>
                                                     <?php else: ?>

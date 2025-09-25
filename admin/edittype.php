@@ -43,7 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_type"])) {
     $carryover    = intval($_POST["max_carryover_days"]);
 
     $stmt = $conn->prepare("UPDATE leave_type SET type_name=?, description=?, requires_approval=?, default_accrualrate_perperiod=?, max_carryover_days=? WHERE type_id=?");
-    $stmt->bind_param("ssiiii", $type_name, $description, $requires_approval, $accrual_rate, $carryover, $type_id);
+    $stmt->bind_param("ssiddi", $type_name, $description, $requires_approval, $accrual_rate, $carryover, $type_id);
 
     if ($stmt->execute()) {
         $_SESSION["success"] = "Leave type updated successfully!";
@@ -151,7 +151,7 @@ $conn->close();
                                 </a>
                                 <ul id="balance" class="sidebar-dropdown list-unstyled collapse">
                                     <li class="sidebar-item">
-                                        <a href="editbalances.php" class="sidebar-link">Edit Leave Balance</a>
+                                        <a href="editbalances.php" class="sidebar-link">View Leave Balance</a>
                                     </li>
                                 </ul>
                             </li>
@@ -216,12 +216,12 @@ $conn->close();
                             <span>Leave Report</span>
                         </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notifications</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -246,10 +246,10 @@ $conn->close();
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="notification.php" class="dropdown-item">
+                                    <!-- <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -274,12 +274,6 @@ $conn->close();
                                 <div class="col-12 col-md-8">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <?php if (!empty($success)): ?>
-                                                <div class="alert alert-success"><?php echo $success; ?></div>
-                                            <?php endif; ?>
-                                            <?php if (!empty($error)): ?>
-                                                <div class="alert alert-danger"><?php echo $error; ?></div>
-                                            <?php endif; ?>
                                             <form method="POST" class="row g-3">
                                                  <div class="col-md-6">
                                                     <label for="type_name" class="form-label">Type Name</label>
@@ -303,7 +297,7 @@ $conn->close();
                                                 </div>
                                                 <div class="col-md-4">
                                                     <label for="max_carryover_days" class="form-label">Max Carryover Days</label>
-                                                    <input type="number" class="form-control" id="max_carryover_days" name="max_carryover_days" 
+                                                    <input type="number" step="any" class="form-control" id="max_carryover_days" name="max_carryover_days" 
                                                         value="<?php echo htmlspecialchars($type['max_carryover_days']); ?>" required>
                                                 </div>
                                                 <div class="col-12">

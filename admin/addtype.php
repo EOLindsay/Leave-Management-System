@@ -31,7 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_type"])) {
         $stmt = $conn->prepare("INSERT INTO leave_type 
             (type_id, type_name, description, requires_approval, default_accrualrate_perperiod, max_carryover_days) 
             VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("issiii", $type_id, $type_name, $description, $requires_approval, $default_accrual, $max_carryover);
+        $stmt->bind_param("issdii", $type_id, $type_name, $description, $requires_approval, $default_accrual, $max_carryover);
 
         if ($stmt->execute()) {
             $_SESSION["success"] = "Leave type added successfully!";
@@ -147,7 +147,7 @@ $conn->close();
                                 </a>
                                 <ul id="balance" class="sidebar-dropdown list-unstyled collapse">
                                     <li class="sidebar-item">
-                                        <a href="editbalances.php" class="sidebar-link">Edit Leave Balance</a>
+                                        <a href="editbalances.php" class="sidebar-link">View Leave Balance</a>
                                     </li>
                                 </ul>
                             </li>
@@ -212,12 +212,12 @@ $conn->close();
                             <span>Leave Report</span>
                         </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notifications</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -242,10 +242,10 @@ $conn->close();
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="notification.php" class="dropdown-item">
+                                    <!-- <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -288,8 +288,8 @@ $conn->close();
                                                     <input type="checkbox" id="requires_approval" name="requires_approval"> Yes
                                                 </div>
                                                 <div class="col-md-4">
-                                                    <label for="default_accrualrate_perperiod" class="form-label">Accrual Rate (per period)</label>
-                                                    <input type="number" class="form-control" id="default_accrualrate_perperiod" name="default_accrualrate_perperiod" required>
+                                                    <label for="default_accrualrate_perperiod" class="form-label">Default Accrual Rate</label>
+                                                    <input type="number" step="any" class="form-control" id="default_accrualrate_perperiod" name="default_accrualrate_perperiod" required>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <label for="max_carryover_days" class="form-label">Max Carryover Days</label>

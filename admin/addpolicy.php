@@ -34,7 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_policy"])) {
         $stmt = $conn->prepare("INSERT INTO leave_policy 
             (policy_id, type_id, policy_name, description, accrual_rate, maxdays_peryear, noticeperiod_days, gender_specific) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("iissiiis", $policy_id, $type_id, $policy_name, $description, $accrual_rate, $max_days, $notice_period, $gender_specific);
+        $stmt->bind_param("iissdiis", $policy_id, $type_id, $policy_name, $description, $accrual_rate, $max_days, $notice_period, $gender_specific);
 
         if ($stmt->execute()) {
             $_SESSION["success"] = "Leave Policy added successfully!";
@@ -154,7 +154,7 @@ $conn->close();
                                 </a>
                                 <ul id="balance" class="sidebar-dropdown list-unstyled collapse">
                                     <li class="sidebar-item">
-                                        <a href="editbalances.php" class="sidebar-link">Edit Leave Balance</a>
+                                        <a href="editbalances.php" class="sidebar-link">View Leave Balance</a>
                                     </li>
                                 </ul>
                             </li>
@@ -219,12 +219,12 @@ $conn->close();
                             <span>Leave Report</span>
                         </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notifications</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -249,10 +249,10 @@ $conn->close();
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="notification.php" class="dropdown-item">
+                                    <!-- <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -277,12 +277,6 @@ $conn->close();
                                 <div class="col-12 col-md-8">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <?php if (!empty($error)): ?>
-                                                <div class="alert alert-danger"><?php echo $error; ?></div>
-                                            <?php endif; ?>
-                                            <?php if (isset($_SESSION["success"])): ?>
-                                                <div class="alert alert-success"><?php echo $_SESSION["success"]; unset($_SESSION["success"]); ?></div>
-                                            <?php endif; ?>
                                             <form method="POST" class="row g-3">
                                                 <div class="col-md-4">
                                                     <label for="policy_id" class="form-label">Policy ID</label>
@@ -309,7 +303,7 @@ $conn->close();
                                                 </div>
                                                 <div class="col-md-3">
                                                     <label for="accrual_rate" class="form-label">Accrual Rate (month)</label>
-                                                    <input type="number" class="form-control" id="accrual_rate" name="accrual_rate" required>
+                                                    <input type="number" step="any" class="form-control" id="accrual_rate" name="accrual_rate" required>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <label for="maxdays_peryear" class="form-label">Max Days / Year</label>

@@ -31,7 +31,7 @@ $recent_leaves = $conn->query("
     SELECT l.request_id, e.first_name, e.last_name, lt.type_name, l.start_date, l.end_date, l.status
     FROM leave_request l
     JOIN employee e ON l.employee_id = e.employee_id
-    JOIN leave_type lt ON l.type_id = lt.type_id
+    LEFT JOIN leave_type lt ON l.type_id = lt.type_id
     ORDER BY l.request_id DESC
     LIMIT 5
 ");
@@ -130,7 +130,7 @@ $recent_leaves = $conn->query("
                                 </a>
                                 <ul id="balance" class="sidebar-dropdown list-unstyled collapse">
                                     <li class="sidebar-item">
-                                        <a href="admin/editbalances.php" class="sidebar-link">Edit Leave Balance</a>
+                                        <a href="admin/editbalances.php" class="sidebar-link">View Leave Balances</a>
                                     </li>
                                 </ul>
                             </li>
@@ -195,12 +195,12 @@ $recent_leaves = $conn->query("
                             <span>Leave Report</span>
                         </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="admin/notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notifications</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="admin/settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -225,10 +225,10 @@ $recent_leaves = $conn->query("
                                    <img src="assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="admin/notification.php" class="dropdown-item">
+                                    <!-- <a href="admin/notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="admin/settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -342,11 +342,18 @@ $recent_leaves = $conn->query("
                                             <?php while ($row = $recent_leaves->fetch_assoc()): ?>
                                                 <tr>
                                                     <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
-                                                    <td><?php echo htmlspecialchars($row['type_name']); ?></td>
+                                                    <td><?= $row['type_name'] ? htmlspecialchars($row['type_name']) : 'N/A'; ?></td>
                                                     <td><?php echo htmlspecialchars($row['start_date']); ?></td>
                                                     <td><?php echo htmlspecialchars($row['end_date']); ?></td>
-                                                    <td><?php echo htmlspecialchars($row['status']); ?></td>
-                                                </tr>
+                                                    <td>
+                                                        <?php if ($row['status']=='approved'): ?>
+                                                            <span class="badge bg-success">Approved</span>
+                                                        <?php elseif ($row['status']=='pending'): ?>
+                                                            <span class="badge bg-warning text-dark">Pending</span>
+                                                        <?php else: ?>
+                                                                <span class="badge bg-danger">Rejected</span>
+                                                        <?php endif; ?>
+                                                    </td>                                                </tr>
                                             <?php endwhile; ?>
                                         </tbody>
                                     </table>

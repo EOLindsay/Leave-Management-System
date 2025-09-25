@@ -49,6 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_employee"])) {
     }
 }
 
+
 $departments = $conn->query("SELECT department_id, department_name FROM department ORDER BY department_name ASC");
 
 $conn->close();
@@ -146,7 +147,7 @@ $conn->close();
                                 </a>
                                 <ul id="balance" class="sidebar-dropdown list-unstyled collapse">
                                     <li class="sidebar-item">
-                                        <a href="editbalances.php" class="sidebar-link">Edit Leave Balance</a>
+                                        <a href="editbalances.php" class="sidebar-link">View Leave Balance</a>
                                     </li>
                                 </ul>
                             </li>
@@ -211,12 +212,12 @@ $conn->close();
                             <span>Leave Report</span>
                         </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notifications</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -241,10 +242,10 @@ $conn->close();
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="notification.php" class="dropdown-item">
+                                    <!-- <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -332,7 +333,7 @@ $conn->close();
                                                 </div>
                                                 <div class="col-12">
                                                     <button type="submit" name="add_employee" class="btn btn-dark">Add Employee</button>
-                                                    <a href="manemp.php" class="btn btn-secondary">View Empoyees</a>
+                                                    <a href="manemp.php" class="btn btn-secondary">View Employees</a>
                                                 </div>
                                             </form>
                                         </div>

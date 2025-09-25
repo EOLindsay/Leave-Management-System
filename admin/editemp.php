@@ -176,7 +176,7 @@ $conn->close();
                                 </a>
                                 <ul id="balance" class="sidebar-dropdown list-unstyled collapse">
                                     <li class="sidebar-item">
-                                        <a href="editbalances.php" class="sidebar-link">Edit Leave Balance</a>
+                                        <a href="editbalances.php" class="sidebar-link">View Leave Balance</a>
                                     </li>
                                 </ul>
                             </li>
@@ -241,12 +241,12 @@ $conn->close();
                             <span>Leave Report</span>
                         </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notifications</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -271,10 +271,10 @@ $conn->close();
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="notification.php" class="dropdown-item">
+                                    <!-- <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -299,12 +299,6 @@ $conn->close();
                                 <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <?php if (!empty($success)): ?>
-                                                <div class="alert alert-success"><?php echo $success; ?></div>
-                                            <?php endif; ?>
-                                            <?php if (!empty($error)): ?>
-                                                <div class="alert alert-danger"><?php echo $error; ?></div>
-                                            <?php endif; ?>
                                             <form method="POST" class="row g-3">
                                                 <div class="col-md-6">
                                                     <label class="form-label">First Name</label>
@@ -364,7 +358,7 @@ $conn->close();
                                                 </div>
                                                 <div class="col-12">
                                                     <button type="submit" name="update_employee" class="btn btn-dark">Update Employee</button>
-                                                    <a href="manemp.php" class="btn btn-secondary">Back</a>
+                                                    <a href="manemp.php" class="btn btn-secondary">Cancel</a>
                                                 </div>
                                             </form>
                                         </div>

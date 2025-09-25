@@ -1,8 +1,8 @@
 <?php
 session_start();
 
-if (!isset($_SESSION["employee_id"])) {
-    header("Location: login.php");
+if (!isset($_SESSION["employee_id"])){
+    header("Location: ../login.php");
     exit;
 }
 
@@ -16,28 +16,70 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$employee_id = $_SESSION["employee_id"];
+$success = "";
+$error   = "";
 
-$stmt = $conn->prepare("
-    SELECT notification_id, message, is_read, created_at 
-    FROM notifications 
-    WHERE employee_id = ? OR employee_id IS NULL
-    ORDER BY created_at DESC
+$employee_id = $_SESSION['employee_id'];
+
+$empQuery = $conn->prepare("SELECT gender FROM employee WHERE employee_id=?");
+$empQuery->bind_param("i", $employee_id);
+$empQuery->execute();
+$empQuery->bind_result($gender);
+$empQuery->fetch();
+$empQuery->close();
+
+$leave_types_stmt = $conn->prepare("
+    SELECT lt.type_id, lt.type_name FROM leave_type lt JOIN leave_policy lp ON lt.type_id = lp.type_id WHERE lp.gender_specific = 'all' OR lp.gender_specific = ? ORDER BY lt.type_name ASC
 ");
-$stmt->bind_param("i", $employee_id);
-$stmt->execute();
-$result = $stmt->get_result();
 
-$conn->query("UPDATE notifications SET is_read = 1 WHERE employee_id = $employee_id");
+$leave_types_stmt->bind_param("s", $gender);
+$leave_types_stmt->execute();
+$leave_types_result = $leave_types_stmt->get_result();
 
-$stmt->close();
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["apply_leave"])) {
+    $type_id     = $_POST["type_id"];
+    $start_date  = $_POST["start_date"];
+    $end_date    = $_POST["end_date"];
+    $reason      = trim($_POST["reason"]);
+
+    // Check if selected leave type is allowed for this employee
+    $check_stmt = $conn->prepare("
+        SELECT COUNT(*) 
+        FROM leave_policy 
+        WHERE type_id = ? AND (gender_specific = 'all' OR gender_specific = ?)
+    ");
+    $check_stmt->bind_param("is", $type_id, $gender);
+    $check_stmt->execute();
+    $check_stmt->bind_result($count);
+    $check_stmt->fetch();
+    $check_stmt->close();
+
+    if ($count > 0) {
+        $stmt = $conn->prepare("
+            INSERT INTO leave_request (employee_id, type_id, start_date, end_date, reason, status, request_date) 
+            VALUES (?, ?, ?, ?, ?, 'pending', NOW())
+        ");
+        $stmt->bind_param("iisss", $employee_id, $type_id, $start_date, $end_date, $reason);
+
+        if ($stmt->execute()) {
+            $success = "Leave application submitted successfully!";
+        } else {
+            $error = "Error: " . $stmt->error;
+        }
+
+        $stmt->close();
+    } else {
+        $error = "This leave type is not available for your gender.";
+    }
+}
+
 $conn->close();
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Notifications</title>
+    <title>Leaves</title>
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" 
     integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
@@ -69,6 +111,36 @@ $conn->close();
                             <i class="bx bx-user"></i>
                             <span>My Profile</span>
                         </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
+                        data-bs-target="#leave" aria-expanded="false" aria-controls="leave">
+                            <i class="bx bx-pencil-square"></i>
+                            <span>My Leave</span>
+                        </a>
+                        <ul id="leave" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                            <li class="sidebar-item">
+                                <a href="apply.php" class="sidebar-link">
+                                    Apply For Leave
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a href="balance.php" class="sidebar-link">
+                                    Leave Balance
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a href="status.php" class="sidebar-link">
+                                    Leave Status
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="history.php" class="sidebar-link">
+                            <i class="bx  bx-history"></i> 
+                            <span>Leave History</span>
+                         </a>
                     </li>
                     <li class="sidebar-item">
                         <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
@@ -119,12 +191,12 @@ $conn->close();
                             <span>Leave Report</span>
                         </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notifications</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -141,7 +213,7 @@ $conn->close();
             </aside>
             <div class="main">
                 <nav class="navbar navbar-expand px-4 py-3">
-                    <h6>Notifications</h6>
+                    <h6>My Leave</h6>
                     <div class="navbar-collapse collapse">
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
@@ -149,10 +221,10 @@ $conn->close();
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="notification.php" class="dropdown-item">
+                                    <!-- <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -171,29 +243,40 @@ $conn->close();
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                My Notifications
+                                Leave Application
                             </h2>
                             <div class="row">
-                                <div class="col-12">
-                                    <div class="card shadow">
+                                <div class="col-12 ">
+                                    <div class="card  shadow">
                                         <div class="card-body py-4">
-                                            <?php if ($result->num_rows > 0): ?>
-                                                <ul class="list-group">
-                                                    <?php while ($row = $result->fetch_assoc()): ?>
-                                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                            <div>
-                                                                <?= htmlspecialchars($row['message']); ?><br>
-                                                                <small class="text-muted"><?= $row['created_at']; ?></small>
-                                                            </div>
-                                                            <?php if (!$row['is_read']): ?>
-                                                                <span class="badge bg-warning">New</span>
-                                                            <?php endif; ?>
-                                                        </li>
-                                                    <?php endwhile; ?>
-                                                </ul>
-                                            <?php else: ?>
-                                                <p class="text-muted">No notifications found.</p>
-                                            <?php endif; ?>
+                                            <form method="POST" class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="type_id" class="form-label">Leave Type</label>
+                                                    <select id="type_id" name="type_id" class="form-select" required>
+                                                        <option value="">-- Select Leave Type --</option>
+                                                        <?php while ($row = $leave_types_result->fetch_assoc()): ?>
+                                                            <option value="<?= $row['type_id']; ?>">
+                                                                <?= htmlspecialchars($row['type_name']); ?>
+                                                            </option>
+                                                        <?php endwhile; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="start_date" class="form-label">Start Date</label>
+                                                    <input type="date" id="start_date" name="start_date" class="form-control" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="end_date" class="form-label">End Date</label>
+                                                    <input type="date" id="end_date" name="end_date" class="form-control" required>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label for="reason" class="form-label">Reason</label>
+                                                    <textarea id="reason" name="reason" class="form-control" rows="3" placeholder="Explain your reason"></textarea>
+                                                </div>
+                                                <div class="col-12">
+                                                    <button type="submit" name="apply_leave" class="btn btn-dark">Submit Application</button>
+                                                </div>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>

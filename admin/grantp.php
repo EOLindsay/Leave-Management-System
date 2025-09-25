@@ -16,9 +16,6 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$success = "";
-$error   = "";
-
 $role = $_SESSION["role"];
 $employee_id = $_SESSION["employee_id"];
 
@@ -32,56 +29,84 @@ if ($role === "manager") {
     $deptQuery->close();
 }
 
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_role"])) {
-    $target_employee_id = intval($_POST["employee_id"]);
-    $new_role = $_POST["role"];
 
-    if ($role === "administrator") {
-        $stmt = $conn->prepare("UPDATE employee SET role=? WHERE employee_id=?");
-        $stmt->bind_param("si", $new_role, $target_employee_id);
-        $stmt->execute();
-        $stmt->close();
-        $_SESSION["success"] = "Role updated successfully!";
-    } elseif ($role === "manager") {
+$query = "
+    SELECT e.employee_id, e.first_name, e.last_name, e.username, e.role, e.email, e.mobile, d.department_name, e.department_id
+    FROM employee e
+    LEFT JOIN department d ON e.department_id = d.department_id
+    WHERE 1=1
+";
 
-        if ($new_role === "administrator") {
-            $_SESSION["error"] = "Managers cannot assign Administrator role.";
-        } else {
-
-            $check = $conn->prepare("SELECT department_id FROM employee WHERE employee_id=?");
-            $check->bind_param("i", $target_employee_id);
-            $check->execute();
-            $check->bind_result($emp_dept);
-            $check->fetch();
-            $check->close();
-
-            if ($emp_dept == $manager_department_id) {
-                $stmt = $conn->prepare("UPDATE employee SET role=? WHERE employee_id=?");
-                $stmt->bind_param("si", $new_role, $target_employee_id);
-                $stmt->execute();
-                $stmt->close();
-                $_SESSION["success"] = "Role updated successfully!";
-            } else {
-                $_SESSION["error"] = "You cannot change roles of employees outside your department.";
-            }
-        }
-    } else {
-        $_SESSION["error"] = "You do not have permission to update roles.";
-    }
-
-    header("Location: grantp.php");
-    exit;
+if ($role === "manager") {
+    $query .= " AND e.department_id = $manager_department_id ";
 }
 
+# Apply filters
+if (!empty($_GET['role'])) {
+    $f_role = $conn->real_escape_string($_GET['role']);
+    $query .= " AND e.role = '$f_role'";
+}
+
+if (!empty($_GET['department_id']) && $role === "administrator") {
+    $department_id = (int) $_GET['department_id'];
+    $query .= " AND e.department_id = $department_id";
+}
+
+if (!empty($_GET['search'])) {
+    $search = $conn->real_escape_string($_GET['search']);
+    $query .= " AND (e.first_name LIKE '%$search%' OR e.last_name LIKE '%$search%' OR e.username LIKE '%$search%')";
+}
+
+$query .= " ORDER BY e.first_name ASC";
+$employees = $conn->query($query);
+
+# Fetch departments (only for admins, managers are locked to theirs)
+$departments = null;
 if ($role === "administrator") {
-    $employees = $conn->query("SELECT employee_id, first_name, last_name, email, role, department_id FROM employee ORDER BY first_name ASC");
-} elseif ($role === "manager") {
-    $stmt = $conn->prepare("SELECT employee_id, first_name, last_name, email, role, department_id FROM employee WHERE department_id=? ORDER BY first_name ASC");
-    $stmt->bind_param("i", $manager_department_id);
-    $stmt->execute();
-    $employees = $stmt->get_result();
-} else {
-    die("Access denied.");
+    $departments = $conn->query("SELECT department_id, department_name FROM department ORDER BY department_name ASC");
+}
+
+
+if (isset($_GET['export'])) {
+    $result = $conn->query($query);
+
+    if ($_GET['export'] == 'csv') {
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=employees.csv');
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['Employee ID', 'Name', 'Username', 'Role', 'Department', 'Email', 'Mobile']);
+
+        while ($row = $result->fetch_assoc()) {
+            fputcsv($output, [
+                $row['employee_id'],
+                $row['first_name']." ".$row['last_name'],
+                $row['username'],
+                ucfirst($row['role']),
+                $row['department_name'] ?? 'N/A',
+                $row['email'],
+                $row['mobile']
+            ]);
+        }
+        fclose($output);
+        exit;
+    }
+
+    if ($_GET['export'] == 'excel') {
+        header("Content-Type: application/vnd.ms-excel");
+        header("Content-Disposition: attachment; filename=employees.xls");
+        echo "Employee ID\tName\tUsername\tRole\tDepartment\tEmail\tMobile\n";
+
+        while ($row = $result->fetch_assoc()) {
+            echo $row['employee_id']."\t".
+                 $row['first_name']." ".$row['last_name']."\t".
+                 $row['username']."\t".
+                 ucfirst($row['role'])."\t".
+                 ($row['department_name'] ?? 'N/A')."\t".
+                 $row['email']."\t".
+                 $row['mobile']."\n";
+        }
+        exit;
+    }
 }
 
 $conn->close();
@@ -179,7 +204,7 @@ $conn->close();
                                 </a>
                                 <ul id="balance" class="sidebar-dropdown list-unstyled collapse">
                                     <li class="sidebar-item">
-                                        <a href="editbalances.php" class="sidebar-link">Edit Leave Balance</a>
+                                        <a href="editbalances.php" class="sidebar-link">View Leave Balance</a>
                                     </li>
                                 </ul>
                             </li>
@@ -244,12 +269,12 @@ $conn->close();
                             <span>Leave Report</span>
                         </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notifications</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -274,10 +299,10 @@ $conn->close();
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="notification.php" class="dropdown-item">
+                                    <!-- <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -302,17 +327,64 @@ $conn->close();
                                 <div class="col-12">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <?php if ($success): ?>
-                                                <div class="alert alert-success"><?php echo $success; ?></div>
-                                            <?php endif; ?>
-                                            <?php if ($error): ?>
-                                                <div class="alert alert-danger"><?php echo $error; ?></div>
-                                            <?php endif; ?>
+                                            <form method="GET" class="row g-3 mb-4">
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Role</label>
+                                                    <select name="role" class="form-select">
+                                                        <option value="">All</option>
+                                                        <option value="employee" <?= (isset($_GET['role']) && $_GET['role']=='employee')?'selected':'' ?>>Employee</option>
+                                                        <option value="manager" <?= (isset($_GET['role']) && $_GET['role']=='manager')?'selected':'' ?>>Manager</option>
+                                                        <?php if ($role === "administrator"): ?>
+                                                        <option value="administrator" <?= (isset($_GET['role']) && $_GET['role']=='administrator')?'selected':'' ?>>Administrator</option>
+                                                        <?php endif; ?>
+                                                    </select>
+                                                </div>
+
+                                                <?php if ($role === "administrator"): ?>
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Department</label>
+                                                    <select name="department_id" class="form-select">
+                                                        <option value="">All</option>
+                                                        <?php while ($dept = $departments->fetch_assoc()): ?>
+                                                            <option value="<?= $dept['department_id']; ?>" <?= (isset($_GET['department_id']) && $_GET['department_id']==$dept['department_id'])?'selected':'' ?>>
+                                                                <?= htmlspecialchars($dept['department_name']); ?>
+                                                            </option>
+                                                        <?php endwhile; ?>
+                                                    </select>
+                                                </div>
+                                                <?php endif; ?>
+
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Search</label>
+                                                    <input type="text" name="search" class="form-control" value="<?= $_GET['search'] ?? '' ?>" placeholder="Name or Username">
+                                                </div>
+
+                                                <div class="col-md-2 d-flex align-items-end">
+                                                    <button type="submit" class="btn btn-dark w-100">Filter</button>
+                                                </div>
+                                                <div class="col-md-2 d-flex align-items-end">
+                                                    <button type="submit" name="export" value="csv" class="btn btn-success w-100">Export CSV</button>
+                                                </div>
+                                                <div class="col-md-2 d-flex align-items-end">
+                                                    <button type="submit" name="export" value="excel" class="btn btn-primary w-100">Export Excel</button>
+                                                </div>
+                                                <div class="col-md-2 d-flex align-items-end">
+                                                    <a href="manemp.php" class="btn btn-secondary w-100">Reset Filters</a>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="card shadow">
+                                        <div class="card-body py-4">
                                             <table class="table table-hover">
                                                 <thead>
                                                     <tr class="highlight">
                                                     <th scope="col">Employee</th>
-                                                    <th scope="col">Email</th>
+                                                    <th scope="col">Department</th>
                                                     <th scope="col">Current Role</th>
                                                     <th scope="col">Change Role</th>
                                                     <th scope="col">Action</th>
@@ -324,7 +396,7 @@ $conn->close();
                                                             <form method="POST">
                                                                 <input type="hidden" name="employee_id" value="<?php echo $row['employee_id']; ?>">
                                                                 <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
-                                                                <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                                                <td><?php echo htmlspecialchars($row['department_name'] ?? 'Unassigned'); ?></td>
                                                                 <td><?php echo htmlspecialchars($row['role']); ?></td>
                                                                 <td>
                                                                     <select name="role" class="form-select" required>

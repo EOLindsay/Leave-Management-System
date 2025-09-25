@@ -106,7 +106,7 @@ a.sidebar-link:hover{
     opacity: 1;
 }
 #sidebar:not(.expand) .sidebar-item .sidebar-dropdown .sidebar-dropdown{
-    left: 130px;
+    left: 90px;
 }
 #sidebar.expand .sidebar-link[data-bs-toggle="collapse"]::after{
     border: solid;

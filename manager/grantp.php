@@ -125,6 +125,36 @@ $conn->close();
                     </li>
                     <li class="sidebar-item">
                         <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
+                        data-bs-target="#leave" aria-expanded="false" aria-controls="leave">
+                            <i class="bx bx-pencil-square"></i>
+                            <span>My Leave</span>
+                        </a>
+                        <ul id="leave" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                            <li class="sidebar-item">
+                                <a href="apply.php" class="sidebar-link">
+                                    Apply For Leave
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a href="balance.php" class="sidebar-link">
+                                    Leave Balance
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a href="status.php" class="sidebar-link">
+                                    Leave Status
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="history.php" class="sidebar-link">
+                            <i class="bx  bx-history"></i> 
+                            <span>Leave History</span>
+                         </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
                         data-bs-target="#emp" aria-expanded="false" aria-controls="emp">
                             <i class="bx bx-people-diversity"></i>
                             <span>Employees</span>
@@ -172,12 +202,12 @@ $conn->close();
                             <span>Leave Report</span>
                         </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notifications</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -202,10 +232,10 @@ $conn->close();
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="notification.php" class="dropdown-item">
+                                    <!-- <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>

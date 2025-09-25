@@ -26,7 +26,7 @@ $total_new = $conn->query("SELECT COUNT(*) AS total FROM leave_request WHERE emp
 $recent_leaves = $conn->query("
     SELECT l.request_id, lt.type_name, l.start_date, l.end_date, l.status
     FROM leave_request l
-    JOIN leave_type lt ON l.type_id = lt.type_id
+    LEFT JOIN leave_type lt ON l.type_id = lt.type_id
     WHERE l.employee_id=$employee_id
     ORDER BY l.request_id DESC
     LIMIT 5
@@ -101,12 +101,12 @@ $conn->close();
                             <span>Leave History</span>
                          </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="employee/notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notification</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="employee/settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -131,10 +131,10 @@ $conn->close();
                                    <img src="assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="employee/notification.php" class="dropdown-item">
+                                    <!-- <a href="employee/notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="employee/settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -208,10 +208,18 @@ $conn->close();
                                         <tbody>
                                             <?php while ($row = $recent_leaves->fetch_assoc()): ?>
                                                 <tr>
-                                                    <td><?php echo htmlspecialchars($row['type_name']); ?></td>
+                                                    <td><?= $row['type_name'] ? htmlspecialchars($row['type_name']) : 'N/A'; ?></td>
                                                     <td><?php echo htmlspecialchars($row['start_date']); ?></td>
                                                     <td><?php echo htmlspecialchars($row['end_date']); ?></td>
-                                                    <td><?php echo htmlspecialchars($row['status']); ?></td>
+                                                    <td>
+                                                        <?php if ($row['status']=='approved'): ?>
+                                                            <span class="badge bg-success">Approved</span>
+                                                        <?php elseif ($row['status']=='pending'): ?>
+                                                            <span class="badge bg-warning text-dark">Pending</span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-danger">Rejected</span>
+                                                        <?php endif; ?>
+                                                    </td>
                                                 </tr>
                                             <?php endwhile; ?>
                                         </tbody>

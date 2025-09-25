@@ -173,7 +173,7 @@ $conn->close();
                                 </a>
                                 <ul id="balance" class="sidebar-dropdown list-unstyled collapse">
                                     <li class="sidebar-item">
-                                        <a href="editbalances.php" class="sidebar-link">Edit Leave Balance</a>
+                                        <a href="editbalances.php" class="sidebar-link">View Leave Balance</a>
                                     </li>
                                 </ul>
                             </li>
@@ -238,12 +238,12 @@ $conn->close();
                             <span>Leave Report</span>
                         </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notifications</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -268,10 +268,10 @@ $conn->close();
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="notification.php" class="dropdown-item">
+                                    <!-- <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -293,7 +293,22 @@ $conn->close();
                                 Settings
                             </h2>
                             <div class="row">
-                                <div class="col-12">
+                                <div class="col-12 col-md-4">
+                                    <div class="card shadow">
+                                        <div class="card-body py-4">
+                                            <strong>Role:</strong> <?= ucfirst($user['role']); ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php if ($success): ?>
+                                <div class="alert alert-success"><?= $success; ?></div>
+                            <?php endif; ?>
+                            <?php if ($error): ?>
+                                <div class="alert alert-danger"><?= $error; ?></div>
+                            <?php endif; ?>
+                            <div class="row">
+                                <div class="col-12 col-md-8">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
                                             <form method="POST">
@@ -320,7 +335,7 @@ $conn->close();
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-12">
+                                <div class="col-12 col-md-8">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
                                             <form method="POST">
@@ -342,22 +357,7 @@ $conn->close();
                                     </div>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-12 col-md-4">
-                                    <div class="card shadow">
-                                        <div class="card-body py-4">
-                                            <strong>Role:</strong> <?= ucfirst($user['role']); ?>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
-                            <?php if ($success): ?>
-                                <div class="alert alert-success"><?= $success; ?></div>
-                            <?php endif; ?>
-                            <?php if ($error): ?>
-                                <div class="alert alert-danger"><?= $error; ?></div>
-                            <?php endif; ?>
                     </div>
                 </main>
             </div>

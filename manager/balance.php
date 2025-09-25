@@ -1,8 +1,7 @@
 <?php
 session_start();
-
 if (!isset($_SESSION["employee_id"])) {
-    header("Location: login.php");
+    header("Location: ../login.php");
     exit;
 }
 
@@ -16,127 +15,159 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$success = "";
-$error   = "";
+$employee_id = $_SESSION["employee_id"];
 
-if (isset($_GET["delete"])) {
-    $type_id = intval($_GET["delete"]);
+$genderResult = $conn->query("SELECT gender FROM employee WHERE employee_id = $employee_id");
+$genderRow = $genderResult->fetch_assoc();
+$gender = $genderRow['gender'];
 
-    $stmt = $conn->prepare("DELETE FROM leave_type WHERE type_id = ?");
-    $stmt->bind_param("i", $type_id);
+$totalQuery = $conn->query("
+    SELECT COALESCE(SUM(p.maxdays_peryear), 0) AS total_policy_days
+    FROM leave_policy p
+    WHERE p.gender_specific = 'all' OR p.gender_specific = '$gender'
+");
+$totalPolicyRow = $totalQuery->fetch_assoc();
+$totalPolicyDays = $totalPolicyRow['total_policy_days'];
 
-    if ($stmt->execute()) {
-        $success = "Leave type deleted successfully!";
-    } else {
-        $error = "Error deleting leave type: " . $stmt->error;
-    }
-    $stmt->close();
-}
+$takenQuery = $conn->query("
+    SELECT COALESCE(SUM(DATEDIFF(lr.end_date, lr.start_date) + 1), 0) AS total_taken
+    FROM leave_request lr
+    WHERE lr.employee_id = $employee_id AND lr.status = 'approved'
+");
+$takenRow = $takenQuery->fetch_assoc();
+$totalTaken = $takenRow['total_taken'];
 
-$sql = "SELECT type_id, type_name, description, requires_approval, default_accrualrate_perperiod, max_carryover_days FROM leave_type ORDER BY type_id ASC";
+$total_balance = $totalPolicyDays - $totalTaken;
 
-$types = $conn->query($sql);
+$annualQuery = $conn->query("
+    SELECT (p.maxdays_peryear - 
+        COALESCE((
+            SELECT SUM(DATEDIFF(lr.end_date, lr.start_date) + 1)
+            FROM leave_request lr
+            JOIN leave_type lt ON lr.type_id = lt.type_id
+            WHERE lr.employee_id = $employee_id 
+              AND lr.status = 'approved'
+              AND lt.type_name = 'Annual Leave'
+        ), 0)
+    ) AS annual_left
+    FROM leave_policy p
+    JOIN leave_type lt ON p.type_id = lt.type_id
+    WHERE lt.type_name = 'Annual Leave'
+      AND (p.gender_specific = 'all' OR p.gender_specific = '$gender')
+    LIMIT 1
+");
+$annualRow = $annualQuery->fetch_assoc();
+$annual_leave = $annualRow['annual_left'] ?? 0;
+
+$sickQuery = $conn->query("
+    SELECT (p.maxdays_peryear - 
+        COALESCE((
+            SELECT SUM(DATEDIFF(lr.end_date, lr.start_date) + 1)
+            FROM leave_request lr
+            JOIN leave_type lt ON lr.type_id = lt.type_id
+            WHERE lr.employee_id = $employee_id 
+              AND lr.status = 'approved'
+              AND lt.type_name = 'Sick Leave'
+        ), 0)
+    ) AS sick_left
+    FROM leave_policy p
+    JOIN leave_type lt ON p.type_id = lt.type_id
+    WHERE lt.type_name = 'Sick Leave'
+      AND (p.gender_specific = 'all' OR p.gender_specific = '$gender')
+    LIMIT 1
+");
+$sickRow = $sickQuery->fetch_assoc();
+$sick_leave = $sickRow['sick_left'] ?? 0;
+
+$query = "
+    SELECT lt.type_name,
+           p.maxdays_peryear AS total_accrued_since_hire,
+           COALESCE(SUM(CASE WHEN lr.status = 'approved' 
+                             THEN DATEDIFF(lr.end_date, lr.start_date) + 1
+                             ELSE 0 END), 0) AS total_taken_since_hire,
+           (p.maxdays_peryear - 
+            COALESCE(SUM(CASE WHEN lr.status = 'approved' 
+                              THEN DATEDIFF(lr.end_date, lr.start_date) + 1
+                              ELSE 0 END), 0)) AS current_balance
+    FROM leave_policy p
+    JOIN leave_type lt ON p.type_id = lt.type_id
+    LEFT JOIN leave_request lr 
+           ON lr.type_id = lt.type_id AND lr.employee_id = $employee_id
+    WHERE p.gender_specific = 'all' OR p.gender_specific = '$gender'
+    GROUP BY lt.type_name, p.maxdays_peryear
+    ORDER BY lt.type_name
+";
+$balances = $conn->query($query);
+
 
 $conn->close();
 ?>
 
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Leaves</title>
-        <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" 
-        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
-        <link rel="stylesheet" href="../assets/css/dashboard.css">
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-        <link rel="icon" type="image/x-icon" href="../assets/favicon/favicon.ico">
-    </head>
-    <body>
-        <div class="wrapper">
+<head>
+    <title>Leaves</title>
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" 
+    integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="../assets/favicon/favicon.ico">
+</head>
+<body>
+    <div class="wrapper">
             <aside id="sidebar">
                 <div class="d-flex justify-content-between p-4">
                     <div class="sidebar-logo">
-                         <a href="../admin.php"><img src="../assets/img/logolight.png" style="width: 166px; height: 50.8px;" alt=" SeamLess Leave"></a> 
-                    </div>
+                    <a href="../manager.php"><img src="../assets/img/logolight.png" style="width: 166px; height: 50.8px;" alt=" SeamLess Leave"></a>                    </div>
                     <button class="toggle-btn border-0" type="button">
                         <i id="icon" class="bx bxs-chevrons-right"></i>
                     </button>
                 </div>
                 <ul class="sidebar-nav">
                     <li class="sidebar-item">
-                        <a href="../admin.php" class="sidebar-link">
+                        <a href="../manager.php" class="sidebar-link">
                             <i class="bx bx-dashboard"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse" 
-                        data-bs-target="#dept" aria-expanded="false" aria-controls="dept">
-                            <i class="bx bx-building"></i>
-                            <span>Departments</span>
+                        <a href="myprofile.php" class="sidebar-link">
+                            <i class="bx bx-user"></i>
+                            <span>My Profile</span>
                         </a>
-                        <ul id="dept" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
+                        data-bs-target="#leave" aria-expanded="false" aria-controls="leave">
+                            <i class="bx bx-pencil-square"></i>
+                            <span>My Leave</span>
+                        </a>
+                        <ul id="leave" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
                             <li class="sidebar-item">
-                                <a href="adddept.php" class="sidebar-link">
-                                    Add Department
+                                <a href="apply.php" class="sidebar-link">
+                                    Apply For Leave
                                 </a>
                             </li>
                             <li class="sidebar-item">
-                                <a href="mandept.php" class="sidebar-link">
-                                    Manage Departments
+                                <a href="balance.php" class="sidebar-link">
+                                    Leave Balance
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a href="status.php" class="sidebar-link">
+                                    Leave Status
                                 </a>
                             </li>
                         </ul>
                     </li>
                     <li class="sidebar-item">
-                        <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
-                        data-bs-target="#leaves" aria-expanded="false" aria-controls="leaves">
-                            <i class="bx bx-pencil-square"></i>
-                            <span>Leaves</span>
-                        </a>
-                        <ul id="leaves" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
-                            <li class="sidebar-item">
-                                <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
-                                data-bs-target="#type" aria-expanded="false" aria-controls="type">
-                                Leave Type
-                                </a>
-                                <ul id="type" class="sidebar-dropdown list-unstyled collapse">
-                                    <li class="sidebar-item">
-                                        <a href="addtype.php" class="sidebar-link">Add Leave Type</a>
-                                    </li>
-                                    <li class="sidebar-item">
-                                        <a href="mantype.php" class="sidebar-link">Manage Leave Types</a>
-                                    </li>
-                                </ul>
-                            </li>
-                            <li class="sidebar-item">
-                                <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
-                                data-bs-target="#policy" aria-expanded="false" aria-controls="policy">
-                                Leave Policy
-                                </a>
-                                <ul id="policy" class="sidebar-dropdown list-unstyled collapse">
-                                    <li class="sidebar-item">
-                                        <a href="addpolicy.php" class="sidebar-link">Add Leave Policy</a>
-                                    </li>
-                                    <li class="sidebar-item">
-                                        <a href="manpolicy.php" class="sidebar-link">Manage Leave Policies</a>
-                                    </li>
-                                </ul>
-                            </li>
-                            <li class="sidebar-item">
-                                <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
-                                data-bs-target="#balance" aria-expanded="false" aria-controls="balance">
-                                Leave Balance
-                                </a>
-                                <ul id="balance" class="sidebar-dropdown list-unstyled collapse">
-                                    <li class="sidebar-item">
-                                        <a href="editbalances.php" class="sidebar-link">View Leave Balance</a>
-                                    </li>
-                                </ul>
-                            </li>
-                        </ul>
+                        <a href="history.php" class="sidebar-link">
+                            <i class="bx  bx-history"></i> 
+                            <span>Leave History</span>
+                         </a>
                     </li>
                     <li class="sidebar-item">
                         <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
@@ -146,18 +177,8 @@ $conn->close();
                         </a>
                         <ul id="emp" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
                             <li class="sidebar-item">
-                                <a href="addemp.php" class="sidebar-link">
-                                    Add Employee
-                                </a>
-                            </li>
-                            <li class="sidebar-item">
                                 <a href="grantp.php" class="sidebar-link">
                                     Employee Permissions
-                                </a>
-                            </li>
-                            <li class="sidebar-item">
-                                <a href="manemp.php" class="sidebar-link">
-                                    Manage Employees
                                 </a>
                             </li>
                         </ul>
@@ -219,7 +240,7 @@ $conn->close();
             </aside>
             <div class="main">
                 <nav class="navbar navbar-expand px-4 py-3">
-                    <h6>Types</h6>
+                    <h6>Balances</h6>
                     <div class="navbar-collapse collapse">
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item dropdown">
@@ -249,8 +270,40 @@ $conn->close();
                     <div class="container-fluid">
                         <div class="mb-3">
                             <h2 class="fw-bold fs-4 mb-3">
-                                Manage Leave Types
+                                Leave Balance
                             </h2>
+                           <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <div class="card shadow-sm text-center">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold">Total Available Balance</h6>
+                                            <h3 class="text-success">
+                                                <?= number_format($total_balance, 0); ?> days
+                                            </h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                 <div class="col-md-4">
+                                    <div class="card shadow-sm text-center">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold">Annual Leave</h6>
+                                            <h3 class="text-primary">
+                                                <?= number_format($annual_leave, 0); ?> days
+                                            </h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card shadow-sm text-center">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold">Sick Leave</h6>
+                                            <h3 class="text-danger">
+                                                <?= number_format($sick_leave, 0); ?> days
+                                            </h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="row">
                                 <div class="col-12">
                                     <div class="card shadow">
@@ -258,39 +311,27 @@ $conn->close();
                                             <table class="table table-hover">
                                                 <thead>
                                                     <tr class="highlight">
-                                                    <th scope="col">ID</th>
-                                                    <th scope="col">Leave Type Name</th>
-                                                    <th scope="col">Description</th>
-                                                    <th scope="col">Requires Approval</th>
-                                                    <th scope="col">Accrual Rate</th>
-                                                    <th scope="col">Max Carryover Days</th>
-                                                    <th scope="col">Actions</th>
+                                                    <th scope="col">Leave Type</th>
+                                                    <th scope="col">Current Balance</th>
+                                                    <th scope="col">Total Balance</th>
+                                                    <th scope="col">Total Taken</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <?php if ($types->num_rows > 0): ?>
-                                                        <?php while ($row = $types->fetch_assoc()): ?>
+                                                     <?php if ($balances->num_rows > 0): ?>
+                                                        <?php while ($row = $balances->fetch_assoc()): ?>
                                                             <tr>
-                                                                <td><?php echo $row['type_id']; ?></td>
-                                                                <td><?php echo htmlspecialchars($row['type_name']); ?></td>
-                                                                <td><?php echo htmlspecialchars($row['description']); ?></td>
-                                                                <td><?php echo $row['requires_approval'] ? "Yes" : "No"; ?></td>
-                                                                <td><?php echo htmlspecialchars($row['default_accrualrate_perperiod']); ?></td>
-                                                                <td><?php echo htmlspecialchars($row['max_carryover_days']); ?></td>
-                                                                <td>
-                                                                    <a href="edittype.php?id=<?php echo $row['type_id']; ?>" class="btn btn-lg"><i class='bx  bx-edit'  style="color: green;"></i> </a>
-                                                                    <a href="mantype.php?delete=<?php echo $row['type_id']; ?>" class="btn btn-lg" onclick="return confirm('Are you sure you want to delete this leave type?');"><i class='bx  bx-trash-x' style="color: red;" ></i> </a>
-                                                                </td>
+                                                                <td><?= $row['type_name'] ? htmlspecialchars($row['type_name']) : 'N/A'; ?></td>
+                                                                <td><?= htmlspecialchars($row['current_balance']); ?></td>
+                                                                <td><?= htmlspecialchars($row['total_accrued_since_hire']); ?></td>
+                                                                <td><?= htmlspecialchars($row['total_taken_since_hire']); ?></td>
                                                             </tr>
                                                         <?php endwhile; ?>
                                                     <?php else: ?>
-                                                        <tr>
-                                                            <td colspan="10" class="text-center">No leave types found</td>
-                                                        </tr>
+                                                        <tr><td colspan="8" class="text-center">No balance records found.</td></tr>
                                                     <?php endif; ?>
                                                 </tbody>
                                             </table>
-                                            <a href="addtype.php" class="btn btn-dark">Add New Leave Type</a>
                                         </div>
                                     </div>
                                 </div>
@@ -302,5 +343,5 @@ $conn->close();
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
         <script src="../assets/js/dashboard.js"></script>
-    </body>
+</body>
 </html>

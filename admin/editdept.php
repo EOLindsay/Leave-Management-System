@@ -54,7 +54,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_department"]))
     $update->close();
 }
 
-$employees = $conn->query("SELECT employee_id, first_name, last_name FROM employee ORDER BY first_name ASC");
+$managers = $conn->query("SELECT employee_id, first_name, last_name FROM employee WHERE role = 'manager' ORDER BY first_name ASC");
 
 $conn->close();
 ?>
@@ -152,7 +152,7 @@ $conn->close();
                                 </a>
                                 <ul id="balance" class="sidebar-dropdown list-unstyled collapse">
                                     <li class="sidebar-item">
-                                        <a href="editbalances.php" class="sidebar-link">Edit Leave Balance</a>
+                                        <a href="editbalances.php" class="sidebar-link">View Leave Balance</a>
                                     </li>
                                 </ul>
                             </li>
@@ -217,12 +217,12 @@ $conn->close();
                             <span>Leave Report</span>
                         </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notifications</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -247,10 +247,10 @@ $conn->close();
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="notification.php" class="dropdown-item">
+                                    <!-- <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -275,12 +275,6 @@ $conn->close();
                                 <div class="col-md-8">
                                     <div class="card shadow">
                                         <div class="card-body py-4">
-                                            <?php if (!empty($success)): ?>
-                                                <div class="alert alert-success"><?php echo $success; ?></div>
-                                            <?php endif; ?>
-                                            <?php if (!empty($error)): ?>
-                                                <div class="alert alert-danger"><?php echo $error; ?></div>
-                                            <?php endif; ?>
                                             <form method="POST">
                                                 <div class="mb-3">
                                                     <label for="department_name" class="form-label">Department Name</label>
@@ -291,7 +285,7 @@ $conn->close();
                                                     <label for="manager_id" class="form-label">Manager</label>
                                                     <select id="manager_id" name="manager_id" class="form-select">
                                                         <option value="">-- No Manager --</option>
-                                                        <?php while ($row = $employees->fetch_assoc()): ?>
+                                                        <?php while ($row = $managers->fetch_assoc()): ?>
                                                             <option value="<?php echo $row['employee_id']; ?>"
                                                                 <?php echo ($row['employee_id'] == $manager_id) ? "selected" : ""; ?>>
                                                                 <?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?>
@@ -300,7 +294,7 @@ $conn->close();
                                                     </select>
                                                 </div>
                                                 <button type="submit" name="update_department" class="btn btn-dark">Update Department</button>
-                                                <a href="mandept.php" class="btn btn-secondary">Back</a>
+                                                <a href="mandept.php" class="btn btn-secondary">Cancel</a>
                                             </form>
                                         </div>
                                     </div>

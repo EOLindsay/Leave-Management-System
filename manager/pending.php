@@ -15,24 +15,6 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-function sendNotification($to, $employeeName, $leaveType, $startDate, $endDate, $status) {
-    $subject = "Leave Request Update: " . ucfirst($status);
-    $message = "
-    Hello $employeeName,
-
-    Your leave request for $leaveType from $startDate to $endDate has been $status.
-
-    Regards,
-    Leave Management System
-    ";
-    $headers = "From: no-reply@yourdomain.com\r\n";
-    $headers .= "Reply-To: no-reply@yourdomain.com\r\n";
-    $headers .= "X-Mailer: PHP/" . phpversion();
-
-    mail($to, $subject, $message, $headers);
-}
-
-
 $manager_id = $_SESSION["employee_id"];
 
 $deptResult = $conn->query("SELECT department_id FROM department WHERE manager_id = $manager_id");
@@ -46,49 +28,45 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["request_id"], $_POST[
     $request_id = intval($_POST["request_id"]);
     $action     = $_POST["action"] === "approve" ? "approved" : "rejected";
 
-    $stmt = $conn->prepare("
-        UPDATE leave_request l
-        JOIN employee e ON l.employee_id = e.employee_id
-        SET l.status=? 
-        WHERE l.request_id=? AND e.department_id=?
-    ");
-    $stmt->bind_param("sii", $action, $request_id, $department_id);
-
-    if ($stmt->execute() && $stmt->affected_rows > 0) {
-    // Fetch employee email + details for notification
-    $info = $conn->query("
-        SELECT e.email, CONCAT(e.first_name,' ',e.last_name) AS emp_name, lt.type_name, l.start_date, l.end_date
+    $check = $conn->prepare("
+        SELECT e.role, e.department_id 
         FROM leave_request l
         JOIN employee e ON l.employee_id = e.employee_id
-        JOIN leave_type lt ON l.type_id = lt.type_id
-        WHERE l.request_id = $request_id
-    ")->fetch_assoc();
+        WHERE l.request_id = ?
+        ");
 
-    if ($info) {
-        sendNotification(
-            $info['email'],
-            $info['emp_name'],
-            $info['type_name'],
-            $info['start_date'],
-            $info['end_date'],
-            $action
-        );
+    $check->bind_param("i", $request_id);
+    $check->execute();
+    $check->bind_result($emp_role, $emp_department);
+    $check->fetch();
+    $check->close();
+    
+    
+
+    if ($emp_role === "manager") {
+        $error = "Only administrators can approve a manager's leave request.";
+    } elseif ($emp_department != $department_id) {
+        $error = "You are not authorized to approve requests outside your department.";
+    } else {
+        $stmt = $conn->prepare("UPDATE leave_request SET status=? WHERE request_id=?");
+        $stmt->bind_param("si", $action, $request_id);
+
+    if ($stmt->execute()) {
+        $success = "Request #$request_id has been $action and email sent.";
+    } else {
+        $error = "Error updating request or not authorized.";
     }
 
-    $success = "Request #$request_id has been $action and email sent.";
-} else {
-    $error = "Error updating request or not authorized.";
-}
-
-    $stmt->close();
+        $stmt->close();
+    }
 }
 
 $query = "
-    SELECT l.request_id, e.first_name, e.last_name, lt.type_name, 
+    SELECT l.request_id, e.first_name, e.last_name, e.role, lt.type_name, 
            l.start_date, l.end_date, l.status
     FROM leave_request l
     JOIN employee e ON l.employee_id = e.employee_id
-    JOIN leave_type lt ON l.type_id = lt.type_id
+    LEFT JOIN leave_type lt ON l.type_id = lt.type_id
     WHERE l.status = 'pending' AND e.department_id = $department_id
     ORDER BY l.request_id DESC
 ";
@@ -132,6 +110,36 @@ $conn->close();
                             <i class="bx bx-user"></i>
                             <span>My Profile</span>
                         </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
+                        data-bs-target="#leave" aria-expanded="false" aria-controls="leave">
+                            <i class="bx bx-pencil-square"></i>
+                            <span>My Leave</span>
+                        </a>
+                        <ul id="leave" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                            <li class="sidebar-item">
+                                <a href="apply.php" class="sidebar-link">
+                                    Apply For Leave
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a href="balance.php" class="sidebar-link">
+                                    Leave Balance
+                                </a>
+                            </li>
+                            <li class="sidebar-item">
+                                <a href="manager/status.php" class="sidebar-link">
+                                    Leave Status
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="history.php" class="sidebar-link">
+                            <i class="bx  bx-history"></i> 
+                            <span>Leave History</span>
+                         </a>
                     </li>
                     <li class="sidebar-item">
                         <a href="#" class="sidebar-link collapsed has-dropdown"data-bs-toggle="collapse" 
@@ -182,12 +190,12 @@ $conn->close();
                             <span>Leave Report</span>
                         </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notifications</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -212,10 +220,10 @@ $conn->close();
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="notification.php" class="dropdown-item">
+                                    <!-- <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -255,16 +263,20 @@ $conn->close();
                                                     <?php while ($row = $leaves->fetch_assoc()): ?>
                                                     <tr>
                                                         <td><?= htmlspecialchars($row['first_name']." ".$row['last_name']) ?></td>
-                                                        <td><?= htmlspecialchars($row['type_name']) ?></td>
+                                                        <td><?= $row['type_name'] ? htmlspecialchars($row['type_name']) : 'N/A'; ?></td>
                                                         <td><?= htmlspecialchars($row['start_date']) ?></td>
                                                         <td><?= htmlspecialchars($row['end_date']) ?></td>
                                                         <td><span class="badge bg-warning text-dark">Pending</span></td>
                                                         <td>
-                                                            <form method="POST" class="d-inline">
-                                                                <input type="hidden" name="request_id" value="<?= $row['request_id'] ?>">
-                                                                <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">Approve</button>
-                                                                <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm">Reject</button>
-                                                            </form>
+                                                            <?php if ($row['role'] === 'manager'): ?>                                                               
+                                                                <span class="badge bg-secondary">Admin approval required</span>
+                                                            <?php else: ?>
+                                                                <form method="POST" class="d-inline">
+                                                                    <input type="hidden" name="request_id" value="<?= $row['request_id'] ?>">
+                                                                    <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">Approve</button>
+                                                                    <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm">Reject</button>
+                                                                </form>
+                                                            <?php endif; ?>
                                                         </td>
                                                     </tr>
                                                     <?php endwhile; ?>

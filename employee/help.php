@@ -75,12 +75,12 @@ $role = $_SESSION["role"];
                             <span>Leave History</span>
                          </a>
                     </li>
-                    <li class="sidebar-item">
+                    <!-- <li class="sidebar-item">
                         <a href="notification.php" class="sidebar-link">
                             <i class="bx bx-bell-ring"></i>
                             <span>Notification</span>
                         </a>
-                    </li>
+                    </li> -->
                     <li class="sidebar-item">
                         <a href="settings.php" class="sidebar-link">
                             <i class="bx bx-cog"></i>
@@ -105,10 +105,10 @@ $role = $_SESSION["role"];
                                    <img src="../assets/img/avatar.jpeg" alt="" class="avatar img-fluid">
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end rounded-0 border-0 shadow mt-3">
-                                    <a href="notification.php" class="dropdown-item">
+                                    <!-- <a href="notification.php" class="dropdown-item">
                                         <i class="bx bx-bell-ring"></i>
                                         <span>Notifications</span>
-                                    </a>
+                                    </a> -->
                                     <a href="settings.php" class="dropdown-item">
                                         <i class="bx bx-cog"></i>
                                         <span>Settings</span>
@@ -134,35 +134,90 @@ $role = $_SESSION["role"];
                                     <div class="card shadow">
                                         <div class="card-body py-4">
                                             <?php if ($role === "employee"): ?>
-                                                <h5>Employee Guide</h5>
-                                                <ul>
-                                                    <li>Go to <b>Apply Leave</b> to request leave.</li>
-                                                    <li>Check <b>Status</b> to see the progress of your leave applications.</li>
-                                                    <li>View your <b>Leave Balance</b> to know how many days remain.</li>
-                                                    <li>Check <b>History</b> to view past leaves.</li>
-                                                    <li>Update your contact details in <b>Settings</b>.</li>
-                                                </ul>
-                                            <?php elseif ($role === "manager"): ?>
-                                                <h5>Manager Guide</h5>
-                                                <ul>
-                                                    <li>Go to <b>All Leaves</b> to view all requests in your department.</li>
-                                                    <li>Use <b>Pending Leaves</b> to approve or reject applications.</li>
-                                                    <li>See <b>Approved/Rejected Leaves</b> for past decisions.</li>
-                                                    <li>Use <b>Reports</b> to generate leave summaries for your department.</li>
-                                                    <li>Assign <b>Permissions</b> to employees (but not administrator roles).</li>
-                                                    <li>Update your own profile in <b>Settings</b>.</li>
-                                                </ul>
-                                            <?php elseif ($role === "administrator"): ?>
-                                                <h5>Administrator Guide</h5>
-                                                <ul>
-                                                    <li>Use <b>Departments</b> to add and manage departments.</li>
-                                                    <li>Manage <b>Employees</b> (add, edit, or set permissions).</li>
-                                                    <li>Configure <b>Leave Types</b> and <b>Policies</b>.</li>
-                                                    <li>Manage <b>Leave Balances</b> across the organization.</li>
-                                                    <li>Check <b>All Leaves</b> across the organization.</li>
-                                                    <li>Generate <b>Reports</b> by employee, department, or organization-wide.</li>
-                                                    <li>Update system settings in <b>Settings</b>.</li>
-                                                </ul>
+                                                <div class="accordion" id="helpAccordion">
+                                                    <div class="accordion-item">
+                                                        <h2 class="accordion-header" id="headingDash">
+                                                            <button class="accordion-button"type="button" data-bs-toggle="collapse" data-bs-target="#collapseDash" aria-expanded="true" aria-controls="collapseDash">
+                                                                Dashboard
+                                                            </button>
+                                                        </h2>
+                                                    </div>
+                                                    <div id="collapseDash" class="accordion-collapse collapse show" aria-labelledby="headingDash" data-bs-parent="#helpAccordion">
+                                                        <div class="accordion-body">
+                                                            <ul>
+                                                                <li>Click on Dashboard in the sidebar</li>
+                                                                <li>First card is the number of leave requests that you've sent </li>
+                                                                <li>Second card is the number of approved leaves </li>
+                                                                <li>Third card is the number of new or pending leave requests you've sent  out</li>
+                                                                <li>The table is a list of the five most recent leave applications </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                    <div class="accordion-item">
+                                                        <h2 class="accordion-header" id="headingProf">
+                                                            <button class="accordion-button"type="button" data-bs-toggle="collapse" data-bs-target="#collapseProf" aria-expanded="true" aria-controls="collapseProf">
+                                                                Profile
+                                                            </button>
+                                                        </h2>
+                                                    </div>
+                                                    <div id="collapseProf" class="accordion-collapse collapse " aria-labelledby="headingProf" data-bs-parent="#helpAccordion">
+                                                        <div class="accordion-body">
+                                                            <ul>
+                                                                <li>Click on My Profle in the sidebar</li>
+                                                                <li>You can view your details here</li>
+                                                        </div>
+                                                    </div>
+                                                    <div class="accordion-item">
+                                                        <h2 class="accordion-header" id="headingleaves">
+                                                            <button class="accordion-button"type="button" data-bs-toggle="collapse" data-bs-target="#collapseleaves" aria-expanded="true" aria-controls="collapseleaves">
+                                                                My Leave > Apply for Leave/ leave Balance/ leave status
+                                                            </button>
+                                                        </h2>
+                                                    </div>
+                                                    <div id="collapseleaves" class="accordion-collapse collapse " aria-labelledby="headingleaves" data-bs-parent="#helpAccordion">
+                                                        <div class="accordion-body">
+                                                            <ul>
+                                                                <li>Click on Leaves in the sidebar</li>
+                                                                <li>You can click on Apply for Leave, leave Balance or leave status</li>
+                                                                <li>At Apply for leave you can send a leave request</li>
+                                                                <li>At leave Balance you can view you leave balance</li>
+                                                                <li>At leave status you can track your leave request and view its status </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                    <div class="accordion-item">
+                                                        <h2 class="accordion-header" id="headingRep">
+                                                            <button class="accordion-button"type="button" data-bs-toggle="collapse" data-bs-target="#collapseRep" aria-expanded="true" aria-controls="collapseRep">
+                                                                Leave History
+                                                            </button>
+                                                        </h2>
+                                                    </div>
+                                                    <div id="collapseRep" class="accordion-collapse collapse " aria-labelledby="headingRep" data-bs-parent="#helpAccordion">
+                                                        <div class="accordion-body">
+                                                            <ul>
+                                                                <li>Click on Leave History in the sidebar</li>
+                                                                <li>Here you have a table of all your leave requests</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                    <div class="accordion-item">
+                                                        <h2 class="accordion-header" id="headingSet">
+                                                            <button class="accordion-button"type="button" data-bs-toggle="collapse" data-bs-target="#collapseSet" aria-expanded="true" aria-controls="collapseSet">
+                                                                Settings
+                                                            </button>
+                                                        </h2>
+                                                    </div>
+                                                    <div id="collapseSet" class="accordion-collapse collapse " aria-labelledby="headingSet" data-bs-parent="#helpAccordion">
+                                                        <div class="accordion-body">
+                                                            <ul>
+                                                                <li>Click on Settings in the sidebar</li>
+                                                                <li>First card Has your role</li>
+                                                                <li>Second card has your name contact information. You can update your contact information that is your email and mobile number </li>
+                                                                <li>Third card allows you to change your password </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             <?php endif; ?>
                                         </div>
                                     </div>
